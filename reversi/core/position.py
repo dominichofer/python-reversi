@@ -1,4 +1,5 @@
 import re
+import struct
 from numpy import uint64
 from .moves import Moves
 from .field import Field
@@ -59,6 +60,13 @@ class Position:
 
     def __str__(self) -> str:
         return self.single_line_string().replace('+', '-')
+    
+    @staticmethod
+    def from_bytes(b: bytes):
+        return Position(*struct.unpack('QQ', b))
+
+    def __bytes__(self) -> bytes:
+        return struct.pack('QQ', self.P, self.O)
     
     def png(self):
         from . import png

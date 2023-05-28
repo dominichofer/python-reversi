@@ -6,7 +6,7 @@ from .principal_variation import Result, PrincipalVariation
 class Updating_HashTable(HashTable):
     """
     HashTable decorator with:
-    - 1 element per bucket
+      1 element per bucket
     """
 
     def __init__(self, ht: HashTable) -> None:

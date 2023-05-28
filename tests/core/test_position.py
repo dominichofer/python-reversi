@@ -14,6 +14,10 @@ class PositionTest(unittest.TestCase):
     def test_from_string_O_to_play(self):
         pos = Position.from_string('O--------------------------------------------------------------X O')
         self.assertEqual(pos, Position(1 << 63, 1))
+
+    def test_bytes(self):
+        pos = Position.start()
+        self.assertEqual(Position.from_bytes(bytes(pos)), pos)
         
     def test_str(self):
         self.assertEqual(str(Position.start()), '---------------------------OX------XO--------------------------- X')

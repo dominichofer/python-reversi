@@ -5,6 +5,11 @@ from reversi import *
 endgame = read_file(Path(__file__) / '..' / '..' / '..' / 'data' / 'endgame.pos')
 fforum = read_file(Path(__file__) / '..' / '..' / '..' / 'data' / 'fforum-1-19.pos')
 
+class ResultTest(unittest.TestCase):
+    def test_bytes(self):
+        result = Result.fail_low(-2, 13, 1.3, Field.A7)
+        self.assertEqual(Result.from_bytes(bytes(result)), result)
+
 
 class PrincipalVariationTest(unittest.TestCase):
     def endgame_test(self, index: int):
@@ -86,8 +91,9 @@ class PrincipalVariationTest(unittest.TestCase):
 
     def test_fforum_01(self):
         empty_key = Position()
-        storage = [(empty_key, None)] * 1_000_000
-        ht = SpecialKey_1Hash_HashTable(storage, empty_key)
+        storage = create_ram_storage(bytes(empty_key), b'0' * 13, 1_000_000)
+        ht = SpecialKey_1Hash_HashTable(storage, bytes(empty_key))
+        ht = BinaryHashtableAdapter(ht, Result)
         tt = Updating_HashTable(ht)
         sorter = mobility_and_tt_sorter(tt)
         cutters = [

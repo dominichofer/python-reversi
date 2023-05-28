@@ -32,6 +32,14 @@ class Result:
     @staticmethod
     def end_score(pos: Position):
         return Result.exact(end_score(pos), pos.empty_count(), float('inf'), Field.PS)
+    
+    @staticmethod
+    def from_bytes(b: bytes):
+        score_type, score, depth, confidence_level, best_move = struct.unpack('bbBdB', b)
+        return Result(ResultType(score_type), score, depth, confidence_level, Field(best_move))
+
+    def __bytes__(self) -> bytes:
+        return struct.pack('bbBdB', self.score_type.value, self.score, self.depth, self.confidence_level, self.best_move.value)
 
     def is_fail_low(self) -> bool:
         return self.score_type == ResultType.fail_low
