@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from reversi import *
 
-endgame = read_file(Path(__file__) / '..' / '..' / '..' / 'data' / 'endgame.pos')
+endgame = read_file(Path(__file__).parent / '..' / '..' / 'data' / 'endgame.pos')
 
 class NegaMaxTest(unittest.TestCase):
     

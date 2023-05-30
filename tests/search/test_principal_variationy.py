@@ -2,8 +2,7 @@ import unittest
 from pathlib import Path
 from reversi import *
 
-endgame = read_file(Path(__file__) / '..' / '..' / '..' / 'data' / 'endgame.pos')
-fforum = read_file(Path(__file__) / '..' / '..' / '..' / 'data' / 'fforum-1-19.pos')
+endgame = read_file(Path(__file__).parent / '..' / '..' / 'data' / 'endgame.pos')
 
 class ResultTest(unittest.TestCase):
     def test_bytes(self):
@@ -89,19 +88,6 @@ class PrincipalVariationTest(unittest.TestCase):
     def test_endgame_fail_high_18(self): self.endgame_fail_high_test(18)
     def test_endgame_fail_high_19(self): self.endgame_fail_high_test(19)
 
-    def test_fforum_01(self):
-        empty_key = Position()
-        storage = create_ram_storage(bytes(empty_key), b'0' * 13, 1_000_000)
-        ht = SpecialKey_1Hash_HashTable(storage, bytes(empty_key))
-        ht = BinaryHashtableAdapter(ht, Result)
-        tt = Updating_HashTable(ht)
-        sorter = mobility_and_tt_sorter(tt)
-        cutters = [
-            tt_cutter(tt),
-            edax_cutter(r'G:\edax-ms-windows\edax-4.4', max_depth=13),
-            ]
-        score = PrincipalVariation(tt, sorter, cutters).eval(fforum[0].pos).score
-        self.assertEqual(score, fforum[0].score)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
