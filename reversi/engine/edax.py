@@ -6,8 +6,7 @@ from secrets import token_hex
 from reversi import Field
 
 
-class UniqueTempFile:
-    def __init__(self, directory: Path) -> None:
+class UniqueTempFile:    def __init__(self, directory: Path) -> None:
         self.filename: Path = Path(directory) / f"tmp_{token_hex(16)}"
 
     def __enter__(self):
@@ -18,8 +17,7 @@ class UniqueTempFile:
         return False
 
 
-class Line:
-    def __init__(self, string: str):
+class Line:    def __init__(self, string: str):
         index, rest = string.split("|")
         depth = rest[:6].strip().split("@")
 
@@ -53,8 +51,7 @@ def split(lst: list, num_sections: int) -> list:
     ]
 
 
-class Edax:
-    def __init__(
+class Edax:    def __init__(
         self,
         exe_path,
         hash_table_size: int | None = None,
@@ -98,8 +95,7 @@ class Edax:
         return [(Field(r.pv[0]) if r.pv else Field.PS) for r in result]
 
 
-class ThreadPoolEdax:
-    def __init__(
+class ThreadPoolEdax:    def __init__(
         self,
         exe_path,
         hash_table_size: int | None = None,

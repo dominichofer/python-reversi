@@ -6,7 +6,6 @@ from .score import undefined_score
 
 
 class GameScore:
-
     def __init__(self, game: Game, scores = None):
         self.game = game
         if scores is None:

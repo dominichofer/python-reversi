@@ -5,7 +5,7 @@
     <ProjectGuid>5eddad39-b954-46d1-9520-47c3a90d83cd</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <StartupFile>
-	</StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -32,10 +32,11 @@
     <Folder Include="reversi\" />
     <Folder Include="tests\core\" />
     <Folder Include="tests\engine\" />
+    <Folder Include="tests\in_out\" />
     <Folder Include="tests\search\" />
-    <Folder Include="tests\io\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="reversi\core\game_generator.py" />
     <Compile Include="reversi\core\score.py" />
     <Compile Include="reversi\core\__init__.py" />
     <Compile Include="reversi\engine\edax.py" />
@@ -53,6 +54,7 @@
     <Compile Include="reversi\core\hashtable.py" />
     <Compile Include="reversi\core\interval.py" />
     <Compile Include="reversi\core\moves.py" />
+    <Compile Include="reversi\search\dynamic_tree_split.py" />
     <Compile Include="reversi\search\negamax.py" />
     <Compile Include="reversi\perft.py" />
     <Compile Include="reversi\search\principal_variation.py" />
@@ -61,6 +63,7 @@
     <Compile Include="reversi\search\search_enhancers.py" />
     <Compile Include="reversi\search\__init__.py" />
     <Compile Include="reversi\__init__.py" />
+    <Compile Include="solve.py" />
     <Compile Include="tests\benchmark.py" />
     <Compile Include="tests\core\test_game_score.py" />
     <Compile Include="tests\core\test_hashtables.py" />
@@ -73,8 +76,10 @@
     <Compile Include="tests\core\__init__.py" />
     <Compile Include="tests\engine\test_edax.py" />
     <Compile Include="tests\engine\__init__.py" />
-    <Compile Include="tests\io\__init__.py" />
+    <Compile Include="tests\in_out\test_file.py" />
+    <Compile Include="tests\in_out\__init__.py" />
     <Compile Include="tests\search\references.py" />
+    <Compile Include="tests\search\test_dynamic_tree_split.py" />
     <Compile Include="tests\search\test_principal_variationy.py" />
     <Compile Include="tests\search\test_alpha_beta.py">
       <SubType>Code</SubType>
@@ -82,7 +87,6 @@
     <Compile Include="tests\search\test_negamax.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="tests\io\test_file.py" />
     <Compile Include="tests\search\__init__.py" />
     <Compile Include="tests\test_perft.py">
       <SubType>Code</SubType>

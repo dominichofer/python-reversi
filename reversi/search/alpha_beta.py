@@ -47,10 +47,9 @@ class Result:
 
 class AlphaBeta:
     "Fail-soft alpha-beta pruning"
-    
-    def __init__(self, tt = None, move_sorter = None) -> None:
+    def __init__(self, transposition_table: HashTable | None = None, move_sorter = None) -> None:
         self.nodes = 0
-        self.tt = tt or HashTableStub()
+        self.tt = transposition_table or HashTableStub()
         self.sorted_moves = move_sorter or (lambda _, x: x)
 
     def eval(self, pos: Position, window: OpenInterval = None) -> int:

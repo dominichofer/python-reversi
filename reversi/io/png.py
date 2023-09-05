@@ -2,7 +2,6 @@ from PIL import Image, ImageDraw
 from reversi import Position
 
 class DrawEngine:
-
     def __init__(self, tile_size: int = 20):
         self.tile_size = tile_size
         self.background_color = (40, 100, 50)

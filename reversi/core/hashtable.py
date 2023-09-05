@@ -58,8 +58,7 @@ class HashTableStub(HashTable):
 
 
 # Mock
-class HashTableMock(HashTable):
-    def __init__(self) -> None:
+class HashTableMock(HashTable):    def __init__(self) -> None:
         self.dict = dict()
 
     def insert(self, key, value) -> bool:
@@ -88,8 +87,7 @@ class SpecialKey_1Hash_HashTable(HashTable):
     - 1 element per bucket
     - special 'empty_key' to mark a bucket as empty.
     """
-
-    def __init__(self, storage: Storage, empty_key, hash_fkt=None) -> None:
+    def __init__(self, storage: Storage, empty_key, hash_fkt=None) -> None:
         self.storage: Storage = storage
         self.empty_key = empty_key
         self.hash_fkt = hash_fkt or hash
@@ -119,7 +117,8 @@ class SpecialKey_1Hash_HashTable(HashTable):
         h = self.__hash(key)
    
         stored_key, stored_value = self.storage[h]
-        if stored_key == key:         return stored_value
+        if stored_key == key:
+            return stored_value
         else:
             return None
 
@@ -130,52 +129,49 @@ class SpecialKey_1Hash_HashTable(HashTable):
 
 
 class HashtableCache(HashTable):
-    "Write through"
+   def __init__(self, caches: list[HashTable], hashtable: HashTable):
+       self.caches = caches
+       self.hashtable = hashtable
 
-    def __init__(self, caches: list[HashTable], hashtable: HashTable):
-        self.caches = caches
-        self.hashtable = hashtable
+   def insert(self, key, value) -> bool:
+       for ht in self.caches:
+           ht.insert(key, value)
+       return self.hashtable.insert(key, value)
 
-    def insert(self, key, value) -> bool:
-        for ht in self.caches:
-            ht.insert(key, value)
-        return self.hashtable.insert(key, value)
+   def delete(self, key) -> bool:
+       for ht in self.caches:
+           ht.delete(key)
+       return self.hashtable.delete(key)
 
-    def delete(self, key) -> bool:
-        for ht in self.caches:
-            ht.delete(key)
-        return self.hashtable.delete(key)
+   def look_up(self, key):
+       for ht in self.caches:
+           value = ht.look_up(key)
+           if value is not None:
+               return value
+       return self.hashtable.look_up(key)
 
-    def look_up(self, key):
-        for ht in self.caches:
-            value = ht.look_up(key)
-            if value is not None:
-                return value
-        return self.hashtable.look_up(key)
-
-    def clear(self) -> None:
-        for ht in self.caches:
-            ht.clear()
-        self.hashtable.clear()
+   def clear(self) -> None:
+       for ht in self.caches:
+           ht.clear()
+       self.hashtable.clear()
 
 
-class BinaryHashtableAdapter(HashTable):
-    def __init__(self, hashtable: BinaryHashTable, value_type) -> None:
+class BinaryHashtableAdapter(HashTable):    def __init__(self, hashtable: BinaryHashTable, value_type) -> None:
         self.ht = hashtable
         self.value_type = value_type
 
     def insert(self, key, value) -> bool:
-        return self.ht.insert(bytes(key), bytes(value))
+        return self.ht.insert(key.to_bytes(4, 'little'), value.to_bytes(4, 'little'))
 
     def delete(self, key) -> bool:
-        return self.ht.delete(bytes(key))
+        return self.ht.delete(key.to_bytes(4, 'little'))
 
     def look_up(self, key):
-        ret = self.ht.look_up(bytes(key))
+        ret = self.ht.look_up(key.to_bytes(4, 'little'))
         if ret is None:
             return None
         else:
-            return self.value_type.from_bytes(ret)
+            return self.value_type.from_bytes(ret, 'little')
 
     def clear(self) -> None:
         self.ht.clear()

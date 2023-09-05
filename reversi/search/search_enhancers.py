@@ -8,7 +8,6 @@ class Updating_HashTable(HashTable):
     HashTable decorator with:
       1 element per bucket
     """
-
     def __init__(self, ht: HashTable) -> None:
         self.ht: HashTable = ht
 
@@ -35,21 +34,6 @@ class Updating_HashTable(HashTable):
         self.ht.clear()
 
 
-def tt_cutter(tt: HashTable):
-    def cutter(pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Result | None:
-        t = tt.look_up(pos)
-        if (
-            t is not None
-            and t.depth >= depth
-            and t.confidence_level >= confidence_level
-            and (t.is_exact() or not t.window.overlaps(window))
-        ):
-            return t
-        return None
-
-    return cutter
-
-
 def edax_cutter(exe_path, min_depth: int = 12, max_depth: int = 64):
     def cutter(pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Result | None:
         if depth < min_depth or depth > max_depth:
@@ -59,20 +43,16 @@ def edax_cutter(exe_path, min_depth: int = 12, max_depth: int = 64):
 
     return cutter
 
-
 def sorted_by_mobility(pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Moves:
     return sorted(
         possible_moves(pos),
         key=lambda move: mobility(play(pos, move))
     )
 
-def mobility_and_tt_sorter(tt: HashTable):
+def sorted_by_mobility_and_tt(tt: HashTable):
     def sorter(pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Moves:
         t = tt.look_up(pos)
-        if t is None:
-            tt_move = Field.PS
-        else:
-            tt_move = t.best_move
+        tt_move = t.best_move if t else Field.PS
         return sorted(
             possible_moves(pos),
             key=lambda move: -1 if move == tt_move else mobility(play(pos, move))

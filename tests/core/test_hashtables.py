@@ -97,13 +97,15 @@ class BinaryHashTable_TestingMock(HashTable):
 
     def delete(self, key: bytes) -> bool:
         assert isinstance(key, bytes)
-        is_in = (key in self.dict)
-        del self.dict[key]
-        return is_in
+        if key in self.dict:
+            del self.dict[key]
+            return True
+        else:
+            return False
 
     def look_up(self, key: bytes) -> bytes | None:
         assert isinstance(key, bytes)
-        return self.dict(key, None)
+        return self.dict.get(key, None)
 
     def clear(self) -> None:
         self.dict.clear()

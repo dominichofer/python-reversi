@@ -4,7 +4,6 @@ from .position import Position, play, play_pass, possible_moves
 
 
 class Game:
-
     def __init__(self, start: Position = Position.start(), moves = None):
         self.__start: Position = start
         self.__current: Position = start
@@ -19,8 +18,8 @@ class Game:
         # 'OO-XXXX-OOOOOXX-OOOOXOXOOXOXOXXXOXOOOXXXOXOXOXXXOOXXXXXXOOOOOOOO O C1 h1'
         
         moves = None
-        if len(string) > 66:
-            moves = [Field[s] for s in string[66:].strip().split(' ')]
+        if len(string) > 67:
+            moves = [Field[s] for s in string[67:].strip().split(' ')]
         return Game(Position.from_string(string), moves)
 
     def __str__(self) -> str:

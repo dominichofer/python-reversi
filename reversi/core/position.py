@@ -6,7 +6,6 @@ from .field import Field
 
 
 class Position:
-
     def __init__(self, P=0, O=0):
         self.P: uint64 = uint64(P)
         self.O: uint64 = uint64(O)
@@ -29,10 +28,10 @@ class Position:
             if string[i] == 'O':
                 O |= uint64(1) << uint64(63 - i)
 
-        if string[65] == 'O':
-            return Position(O, P)
-        else:
+        if string[65] == 'X':
             return Position(P, O)
+        else:
+            return Position(O, P)
 
     def character(self, index: int) -> str:
         moves = possible_moves(self)

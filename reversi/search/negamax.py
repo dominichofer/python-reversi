@@ -1,10 +1,9 @@
 from reversi.core import *
 
 
-class NegaMax:
-    def __init__(self, tt=None) -> None:
+class NegaMax:    def __init__(self, transposition_table: HashTable | None = None) -> None:
         self.nodes = 0
-        self.tt = tt or HashTableStub()
+        self.tt = transposition_table or HashTableStub()
 
     def eval(self, pos: Position) -> int:
         self.nodes += 1
