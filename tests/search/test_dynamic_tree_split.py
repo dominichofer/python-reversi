@@ -34,7 +34,7 @@ class ParallelTreeTest(unittest.TestCase):
 
 class DynamicTreeSearchTest(unittest.TestCase):
     def endgame_test(self, index: int):
-        score = DynamicTreeSearch(3, PrincipalVariation(), ).eval(endgame[index].pos).score
+        score = DynamicTreeSearch(3, PrincipalVariation()).eval(endgame[index].pos)
         self.assertEqual(score, endgame[index].score)
 
     def test_endgame_00(self): self.endgame_test( 0)

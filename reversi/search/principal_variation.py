@@ -94,25 +94,13 @@ class Status:
 
 
 class PrincipalVariation:
-    def __init__(self, tt=None, move_sorter=None, cutters: list = None) -> None:
+    def __init__(self, tt=None, cutters: list = None) -> None:
         self.nodes = 0
         self.tt = tt or HashTableStub()
-        self.sorted_moves = move_sorter or (lambda pos, *_: possible_moves(pos))
         self.cutters = cutters or []
 
     def eval(self, pos: Position, window: OpenInterval = None, depth: int = None, confidence_level: float = None) -> Result:
         return self.pvs(pos, window or OpenInterval(-inf_score, +inf_score), depth or pos.empty_count(), confidence_level or float('inf'))
-
-    def transposition_cut(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float):
-        t = self.tt.look_up(pos)
-        if t and t.depth >= depth and t.confidence_level >= confidence_level:
-            if t.is_exact():
-                return Result.exact(t.window.lower, t.depth, t.confidence_level, t.best_move)
-            if t.window > window:
-                return Result.fail_high(t.window.lower, t.depth, t.confidence_level, t.best_move)
-            if t.window < window:
-                return Result.fail_low(t.window.lower, t.depth, t.confidence_level, t.best_move)
-        return None
 
     def pvs(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Result:        
         self.nodes += 1
@@ -123,12 +111,12 @@ class PrincipalVariation:
                 return -self.pvs(passed, -window, depth, confidence_level)
             return Result.end_score(pos)
 
+        for cutter in self.cutters:
+            if cut := cutter(pos, window, depth, confidence_level):
+                return cut
+            
         if tc := self.transposition_cut(pos, window, depth, confidence_level):
             return tc
-
-        for cutter in self.cutters:
-            if ret := cutter(pos, window, depth, confidence_level):
-                return ret
 
         status = Status(window.lower)
         first = True
@@ -165,13 +153,13 @@ class PrincipalVariation:
             if possible_moves(passed):
                 return -self.zws(passed, -window, depth, confidence_level)
             return Result.end_score(pos)
-        
-        if tc := self.transposition_cut(pos, window, depth, confidence_level):
-            return tc
 
         for cutter in self.cutters:
             if ret := cutter(pos, window, depth, confidence_level):
                 return ret
+        
+        if tc := self.transposition_cut(pos, window, depth, confidence_level):
+            return tc
             
         status = Status(window.lower)
         for move in self.sorted_moves(pos, window, depth, confidence_level):
@@ -185,3 +173,22 @@ class PrincipalVariation:
         ret = status.result()
         self.tt.insert(pos, ret)
         return ret
+
+    def transposition_cut(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float):
+        t = self.tt.look_up(pos)
+        if t and t.depth >= depth and t.confidence_level >= confidence_level:
+            if t.is_exact():
+                return Result.exact(t.window.lower, t.depth, t.confidence_level, t.best_move)
+            if t.window > window:
+                return Result.fail_high(t.window.lower, t.depth, t.confidence_level, t.best_move)
+            if t.window < window:
+                return Result.fail_low(t.window.lower, t.depth, t.confidence_level, t.best_move)
+        return None
+    
+    def sorted_moves(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Moves:
+        t = self.tt.look_up(pos)
+        tt_move = t.best_move if t else Field.PS
+        return sorted(
+            possible_moves(pos),
+            key=lambda move: -1 if move == tt_move else mobility(play(pos, move))
+        )

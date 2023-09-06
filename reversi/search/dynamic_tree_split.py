@@ -1,7 +1,8 @@
 from enum import IntEnum
 import threading
 import multiprocessing
-from reversi.core import OpenInterval, ClosedInterval
+from reversi.core import *
+from . import Result
 
 inf_score = +33
 
@@ -43,18 +44,19 @@ class NodeStatus(IntEnum):
     
 
 class SearchNode(TreeNode):
-        
-    def __init__(self, ply, type: NodeType, pos, window: OpenInterval):
+    def __init__(self, ply, type: NodeType, pos: Position, depth: int, confidence_level: float, window: OpenInterval):
         super().__init__()
         self.ply = ply  # remaining
         self._status = NodeStatus.Unsolved
         self._type = type
         self.pos = pos
+        self.depth = depth
+        self.confidence_level = confidence_level
         self.window = window
         self._result = None
 
     def __str__(self) -> str:
-        return f'{self._type.name} {self._status.name} ply={self.ply} pos={self.pos} window={self.window} result={self.result}'
+        return f'{self._type.name} {self._status.name} ply={self.ply} pos={self.pos} depth={self.depth}@{self.confidence_level} window={self.window} result={self.result}'
 
     @property
     def is_pv_node(self) -> bool:
@@ -167,35 +169,38 @@ class SearchNode(TreeNode):
             self.parent.update_result()
             
 
-def expand(node: SearchNode, move_sorter, play):
-    for i, move in enumerate(move_sorter(node.pos)):
-        # child_type
-        if node.is_pv_node:
-            if i == 0:
-                child_type = NodeType.PV
-            else:
+def expand(node: SearchNode, move_sorter):
+    if possible_moves(node.pos):
+        for i, move in enumerate(move_sorter(node.pos, node.window, node.depth, node.confidence_level)):
+            if node.is_pv_node:
+                if i == 0:
+                    child_type = NodeType.PV
+                else:
+                    child_type = NodeType.Cut
+            elif node.is_all_node:
                 child_type = NodeType.Cut
-        elif node.is_all_node:
-            child_type = NodeType.Cut
-        elif node.is_cut_node:
-            child_type = NodeType.All
-            
-        # child_ply
-        if move is None:
-            child_ply = node.ply
-        else:
-            child_ply = node.ply - 1
-            
-        node.append(SearchNode(child_ply, child_type, play(node.pos, move), -node.window))
+            elif node.is_cut_node:
+                child_type = NodeType.All
+            node.append(SearchNode(node.ply - 1, child_type, play(node.pos, move), node.depth - 1, node.confidence_level, -node.window))
+    else:
+        passed = play_pass(node.pos)
+        if possible_moves(passed):
+            if node.is_pv_node:
+                child_type = NodeType.PV
+            elif node.is_all_node:
+                child_type = NodeType.Cut
+            elif node.is_cut_node:
+                child_type = NodeType.All
+            node.append(SearchNode(node.ply, child_type, passed, node.depth, node.confidence_level, -node.window))
         
 
-def next_unsolved_leaf_node(node: SearchNode, move_sorter, play):        
+def next_unsolved_leaf_node(node: SearchNode, move_sorter):
     if node.is_taken or node.is_solved:
         return None
         
     # Lazy node expansion
     if node.is_leaf and node.ply > 0:
-        expand(node, move_sorter, play)
+        expand(node, move_sorter)
         
     if node.is_leaf:
         return node
@@ -205,42 +210,68 @@ def next_unsolved_leaf_node(node: SearchNode, move_sorter, play):
     parallel_children = node.children[serial_nodes:]
     for child in serial_children:
         if not child.is_solved:
-            return next_unsolved_leaf_node(child, move_sorter, play)
+            return next_unsolved_leaf_node(child, move_sorter)
     for child in parallel_children:
-        next_leaf_node = next_unsolved_leaf_node(child, move_sorter, play)
+        next_leaf_node = next_unsolved_leaf_node(child, move_sorter)
         if next_leaf_node:
             return next_leaf_node
     
     raise RuntimeError("Node is unsolved but had no unsolved children.")
 
 
-class ParallelTree:
-    def __init__(self, ply, pos, window: OpenInterval, move_sorter, play) -> None:
-        self.root = SearchNode(ply, NodeType.PV, pos, window)
-        self.move_sorter = move_sorter
-        self.play = play
-        self._lock = threading.Lock()
+# class ParallelTree:
+#     def __init__(self, ply, pos: Position, depth: int, confidence_level: float, window: OpenInterval, move_sorter) -> None:
+#         self.root = SearchNode(ply, NodeType.PV, pos, depth, confidence_level, window)
+#         self.move_sorter = move_sorter
+#         self._lock = threading.Lock()
 
-    def __str__(self) -> str:
-        s: str = ''
-        indent = self.root.ply
-        def append(node):
-            nonlocal s, indent
-            s += ' ' * (indent - node.ply) + str(node) + '\n'
-        traverse_depth_first(self.root, append, lambda *args: None)
-        return s
+#     def __str__(self) -> str:
+#         s: str = ''
+#         indent = self.root.ply
+#         def append(node):
+#             nonlocal s, indent
+#             s += ' ' * (indent - node.ply) + str(node) + '\n'
+#         traverse_depth_first(self.root, append, lambda *args: None)
+#         return s
 
-    @property    
-    def is_solved(self) -> bool:
-        return self.root.is_solved
+#     @property    
+#     def is_solved(self) -> bool:
+#         return self.root.is_solved
     
-    @property
-    def result(self):
-        return self.root.result
+#     @property
+#     def result(self):
+#         return self.root.result
+
+#     def get_task(self):
+#         with self._lock:
+#             node = next_unsolved_leaf_node(self.root, self.move_sorter)
+#             if node is not None:
+#                 node.status = NodeStatus.Taken
+#             return node
+    
+#     def get_tasks(self):
+#         nodes = []
+#         while True:
+#             node = self.get_task()
+#             if node is None:
+#                 return nodes
+#             nodes.append(node)
+
+#     def report(self, node: SearchNode, result):
+#         with self._lock:
+#             node.result = result
+        
+           
+class DynamicTreeSearch:
+    def __init__(self, dynamic_tree_depth: int, search) -> None:
+        self.ply = dynamic_tree_depth
+        self.search = search
+        self.lock = threading.Lock()
+        self.cv = threading.Condition()
 
     def get_task(self):
-        with self._lock:
-            node = next_unsolved_leaf_node(self.root, self.move_sorter, self.play)
+        with self.lock:
+            node = next_unsolved_leaf_node(self.root, self.search.sorted_moves)
             if node is not None:
                 node.status = NodeStatus.Taken
             return node
@@ -254,33 +285,37 @@ class ParallelTree:
             nodes.append(node)
 
     def report(self, node: SearchNode, result):
-        with self._lock:
+        with self.lock:
             node.result = result
+
+    def wait(self):
+        self.cv.wait()
+
+    def notify_all(self):
+        self.cv.notify_all()
+
+    def eval(self, pos: Position, depth: int = None, confidence_level: float = None, window: OpenInterval = None):
+        depth = depth or pos.empty_count()
+        self.root = SearchNode(min(self.ply, depth), NodeType.PV, pos, depth, confidence_level or float('inf'), window or OpenInterval(-inf_score, +inf_score))
         
-    
-class DynamicTreeSearch:
-    def __init__(self, dynamic_tree_depth: int, search, move_sorter) -> None:
-        self.ply = dynamic_tree_depth
-        self.search = search
-        self.move_sorter = move_sorter
-        
-    def eval(self, pos, window: OpenInterval):
-        tree = ParallelTree(self.ply, pos, window, self.move_sorter)
-        new_report = threading.Condition()
-        
-        def work_on_tree():
-            nonlocal self, tree, new_report
-            while not tree.is_solved:
-                node = tree.get_task()
-                if node is None:
-                    new_report.wait()
-                    continue
-                result = self.search.eval(node.pos, node.window)
-                tree.report(node, result)
-                new_report.notify_all()
-        
-        cpu_count = multiprocessing.cpu_count()
-        with multiprocessing.Pool(cpu_count) as pool:
-            pool.map(work_on_tree, range(cpu_count))
+        # cpu_count = multiprocessing.cpu_count()
+        # with multiprocessing.Pool(cpu_count) as pool:
+        #     for _ in range(cpu_count):
+        #         pool.apply_async(self.work_on_tree, (tree, new_report, self.search))
+        work_on_tree(self)
                 
-        return tree.result
+        return self.root.result.score
+    
+
+def work_on_tree(dts: DynamicTreeSearch):
+    while not dts.root.is_solved:
+        node = dts.get_task()
+        print(f'Got task {node}')
+        if node is None:
+            with dts.cv:
+                dts.wait()
+            continue
+        result = dts.search.eval(node.pos, node.window)
+        dts.report(node, result)
+        with dts.cv:
+            dts.notify_all()
