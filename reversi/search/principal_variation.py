@@ -1,194 +1,180 @@
-from enum import Enum
+"Principal variation search."
 from dataclasses import dataclass
-from multiprocessing.util import is_exiting
-from reversi.core import *
-
-
-class ResultType(Enum):
-    fail_low = -1
-    exact = 0
-    fail_high = +1
-
-
-@dataclass
-class Result:
-    score_type: ResultType
-    score: int
-    depth: int
-    confidence_level: float
-    best_move: Field
-
-    @staticmethod
-    def fail_low(score: int, depth: int, confidence_level: float, best_move: Field):
-        return Result(ResultType.fail_low, score, depth, confidence_level, best_move)
-
-    @staticmethod
-    def exact(score: int, depth: int, confidence_level: float, best_move: Field):
-        return Result(ResultType.exact, score, depth, confidence_level, best_move)
-
-    @staticmethod
-    def fail_high(score: int, depth: int, confidence_level: float, best_move: Field):
-        return Result(ResultType.fail_high, score, depth, confidence_level, best_move)
-
-    @staticmethod
-    def end_score(pos: Position):
-        return Result.exact(end_score(pos), pos.empty_count(), float('inf'), Field.PS)
-
-    def __str__(self) -> str:
-        return f'{self.window} d{self.depth}@{self.confidence_level} {self.best_move.name}'
-
-    def __neg__(self):
-        "Negates the window and the result type"
-        return Result(ResultType(-self.score_type.value), -self.score, self.depth, self.confidence_level, self.best_move)
-    
-    def is_fail_low(self) -> bool:
-        return self.score_type == ResultType.fail_low
-
-    def is_exact(self) -> bool:
-        return self.score_type == ResultType.exact
-
-    def is_fail_high(self) -> bool:
-        return self.score_type == ResultType.fail_high
-    
-    @property
-    def window(self) -> ClosedInterval:
-        if self.is_fail_low():
-            return ClosedInterval(-64, self.score)
-        if self.is_exact():
-            return ClosedInterval(self.score, self.score)
-        if self.is_fail_high():
-            return ClosedInterval(self.score, +64)
-
-    def beta_cut(self, move: Field):
-        return Result.fail_high(-self.score, self.depth + 1, self.confidence_level, move)
-    
-    @staticmethod
-    def from_bytes(b: bytes):
-        score_type, score, depth, confidence_level, best_move = struct.unpack('bbBdB', b)
-        return Result(ResultType(score_type), score, depth, confidence_level, Field(best_move))
-
-    def __bytes__(self) -> bytes:
-        return struct.pack('bbBdB', self.score_type.value, self.score, self.depth, self.confidence_level, self.best_move.value)
+from reversi.game import (
+    OpenInterval,
+    ClosedInterval,
+    Intensity,
+    Field,
+    min_score,
+    max_score,
+    inf_score,
+    Position,
+    possible_moves,
+    play,
+    play_pass,
+    end_score,
+)
+from .hashtable import HashTableStub
+from .search_result import SearchResult
 
 
 @dataclass
 class Status:
-    alpha: int
+    "Status of a search."
+    fail_low_limit: int
     best_score: int = -inf_score
     best_move: Field = Field.PS
-    worst_confidence_level: float = float('inf')
-    smallest_depth: int = 64
+    lowest_intensity: Intensity = Intensity(64)
 
-    def update(self, result: Result, move: Field):
-        self.worst_confidence_level = min(self.worst_confidence_level, result.confidence_level)
-        self.smallest_depth = min(self.smallest_depth, result.depth + 1)
-        if -result.score > self.best_score:
-            self.best_score = -result.score
+    def update(self, result: SearchResult, move: Field):
+        "Updates the status with the result of a move."
+        self.lowest_intensity = Intensity(
+            min(self.lowest_intensity.depth, result.intensity.depth + 1),
+            min(
+                self.lowest_intensity.confidence_level,
+                result.intensity.confidence_level,
+            ),
+        )
+        if -result.window > self.best_score:
+            self.best_score = -result.window.upper
             self.best_move = move
 
-    def result(self) -> Result:
-        if self.best_score > self.alpha:
-            return Result.exact(self.best_score, self.smallest_depth, self.worst_confidence_level, self.best_move)
+    def result(self) -> SearchResult:
+        "Returns the result of a completed search."
+        if self.best_score > self.fail_low_limit:
+            lower = self.best_score
         else:
-            return Result.fail_low(self.best_score, self.smallest_depth, self.worst_confidence_level, self.best_move)
+            lower = min_score
+        return SearchResult(
+            ClosedInterval(lower, self.best_score),
+            self.lowest_intensity,
+            self.best_move,
+        )
+
+
+def beta_cut(result: SearchResult, move: Field) -> SearchResult:
+    "Returns a beta cut result."
+    return SearchResult(
+        ClosedInterval(-result.window.upper, max_score), result.intensity + 1, move
+    )
+
+
+def end_result(pos: Position) -> SearchResult:
+    "Returns the result of terminal position."
+    s = end_score(pos)
+    return SearchResult(ClosedInterval(s, s), Intensity(pos.empty_count()), Field.PS)
 
 
 class PrincipalVariation:
-    def __init__(self, tt=None, cutters: list = None) -> None:
+    "Principal variation search."
+
+    def __init__(
+        self, move_sorter=None, transposition_table=None, cutters: list | None = None
+    ) -> None:
         self.nodes = 0
-        self.tt = tt or HashTableStub()
+        self.sorted_moves = move_sorter or (lambda _, x: x)
+        self.tt = transposition_table or HashTableStub()
         self.cutters = cutters or []
 
-    def eval(self, pos: Position, window: OpenInterval = None, depth: int = None, confidence_level: float = None) -> Result:
-        return self.pvs(pos, window or OpenInterval(-inf_score, +inf_score), depth or pos.empty_count(), confidence_level or float('inf'))
+    def eval(
+        self,
+        pos: Position,
+        window: OpenInterval | None = None,
+        intensity: Intensity | None = None,
+    ) -> SearchResult:
+        "Evaluate a position."
+        return self.pvs(
+            pos,
+            window or OpenInterval(min_score, max_score),
+            intensity or Intensity(pos.empty_count()),
+        )
 
-    def pvs(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Result:        
+    def pvs(
+        self, pos: Position, window: OpenInterval, intensity: Intensity
+    ) -> SearchResult:
+        "Principal variation search."
         self.nodes += 1
-        
-        if not possible_moves(pos):
+
+        moves = possible_moves(pos)
+        if not moves:
             passed = play_pass(pos)
             if possible_moves(passed):
-                return -self.pvs(passed, -window, depth, confidence_level)
-            return Result.end_score(pos)
+                return -self.pvs(passed, -window, intensity)
+            return end_result(pos)
 
         for cutter in self.cutters:
-            if cut := cutter(pos, window, depth, confidence_level):
+            if cut := cutter(pos, window, intensity):
                 return cut
-            
-        if tc := self.transposition_cut(pos, window, depth, confidence_level):
+
+        if tc := self.transposition_cut(pos, window, intensity):
             return tc
 
         status = Status(window.lower)
         first = True
-        for move in self.sorted_moves(pos, window, depth, confidence_level):
+        for move in self.sorted_moves(pos, moves):
             if not first:
                 zero_window = OpenInterval(window.lower, window.lower + 1)
-                result = self.zws(play(pos, move), -zero_window, depth - 1, confidence_level)
-                if -result.score < zero_window:
+                result = self.zws(play(pos, move), -zero_window, intensity - 1)
+                if -result.window < zero_window:
                     status.update(result, move)
                     continue
-                if -result.score > window:  # beta cut
-                    ret = result.beta_cut(move)
-                    self.tt.insert(pos, ret)
+                if -result.window > window:  # beta cut
+                    ret = beta_cut(result, move)
+                    self.tt.update(pos, ret)
                     return ret
 
-            result = self.pvs(play(pos, move), -window, depth - 1, confidence_level)
-            if -result.score > window:  # beta cut
-                ret = result.beta_cut(move)
-                self.tt.insert(pos, ret)
+            result = self.pvs(play(pos, move), -window, intensity - 1)
+            if -result.window > window:  # beta cut
+                ret = beta_cut(result, move)
+                self.tt.update(pos, ret)
                 return ret
             status.update(result, move)
-            window.lower = max(window.lower, -result.score)
+            window.lower = max(window.lower, -result.window.upper)
             first = False
 
         ret = status.result()
-        self.tt.insert(pos, ret)
+        self.tt.update(pos, ret)
         return ret
 
-    def zws(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Result:
+    def zws(
+        self, pos: Position, window: OpenInterval, intensity: Intensity
+    ) -> SearchResult:
+        "Zero-window search."
         self.nodes += 1
-        
-        if not possible_moves(pos):
+
+        moves = possible_moves(pos)
+        if not moves:
             passed = play_pass(pos)
             if possible_moves(passed):
-                return -self.zws(passed, -window, depth, confidence_level)
-            return Result.end_score(pos)
+                return -self.zws(passed, -window, intensity)
+            return end_result(pos)
 
         for cutter in self.cutters:
-            if ret := cutter(pos, window, depth, confidence_level):
+            if ret := cutter(pos, window, intensity):
                 return ret
-        
-        if tc := self.transposition_cut(pos, window, depth, confidence_level):
+
+        if tc := self.transposition_cut(pos, window, intensity):
             return tc
-            
+
         status = Status(window.lower)
-        for move in self.sorted_moves(pos, window, depth, confidence_level):
-            result = self.zws(play(pos, move), -window, depth - 1, confidence_level)
-            if -result.score > window:  # beta cut
-                ret = result.beta_cut(move)
-                self.tt.insert(pos, ret)
+        for move in self.sorted_moves(pos, moves):
+            result = self.zws(play(pos, move), -window, intensity - 1)
+            if -result.window > window:  # beta cut
+                ret = beta_cut(result, move)
+                self.tt.update(pos, ret)
                 return ret
             status.update(result, move)
 
         ret = status.result()
-        self.tt.insert(pos, ret)
+        self.tt.update(pos, ret)
         return ret
 
-    def transposition_cut(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float):
+    def transposition_cut(
+        self, pos: Position, window: OpenInterval, intensity: Intensity
+    ) -> SearchResult | None:
+        "Returns a transposition cut result if one fits. None otherwise."
         t = self.tt.look_up(pos)
-        if t and t.depth >= depth and t.confidence_level >= confidence_level:
-            if t.is_exact():
-                return Result.exact(t.window.lower, t.depth, t.confidence_level, t.best_move)
-            if t.window > window:
-                return Result.fail_high(t.window.lower, t.depth, t.confidence_level, t.best_move)
-            if t.window < window:
-                return Result.fail_low(t.window.lower, t.depth, t.confidence_level, t.best_move)
+        if t and t.intensity >= intensity:
+            if t.is_exact() or t.window > window or t.window < window:
+                return t
         return None
-    
-    def sorted_moves(self, pos: Position, window: OpenInterval, depth: int, confidence_level: float) -> Moves:
-        t = self.tt.look_up(pos)
-        tt_move = t.best_move if t else Field.PS
-        return sorted(
-            possible_moves(pos),
-            key=lambda move: -1 if move == tt_move else mobility(play(pos, move))
-        )

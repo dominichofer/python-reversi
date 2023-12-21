@@ -1,6 +1,8 @@
 import unittest
 from pathlib import Path
-from reversi import *
+from reversi.board import *
+from reversi.game import *
+from reversi.in_out import write_file, read_file
 
 
 class GameFileTest(unittest.TestCase):
@@ -24,8 +26,8 @@ class GameFileTest(unittest.TestCase):
 
     def test_pos_score_file(self):
         reference = [
-            PositionScore(Position(1, 2), +3),
-            PositionScore(Position(4, 8), -3),
+            ScoredPosition(Position(1, 2), +3),
+            ScoredPosition(Position(4, 8), -3),
         ]
         self.assertEqual(self.write_and_read(reference), reference)
 
@@ -36,13 +38,13 @@ class GameFileTest(unittest.TestCase):
         ]
         self.assertEqual(self.write_and_read(reference), reference)
 
-    def test_game_score_file(self):
+    def test_scored_game_file(self):
         reference = [
-            GameScore(Game(Position(1, 2), [Field.A1, Field.B1]), [+1, +2, +3]),
-            GameScore(Game(Position(4, 8), [Field.A2, Field.B2]), [-1, -2, -3]),
+            ScoredGame(Game(Position(1, 2), [Field.A1, Field.B1]), [+1, +2, +3]),
+            ScoredGame(Game(Position(4, 8), [Field.A2, Field.B2]), [-1, -2, -3]),
         ]
         self.assertEqual(self.write_and_read(reference), reference)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

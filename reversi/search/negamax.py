@@ -1,11 +1,15 @@
-from reversi.core import *
+"NegaMax search."
+from reversi.game import Position, possible_moves, play, play_pass, end_score
 
 
-class NegaMax:    def __init__(self, transposition_table: HashTable | None = None) -> None:
-        self.nodes = 0
-        self.tt = transposition_table or HashTableStub()
+class NegaMax:
+    "NegaMax search."
+
+    def __init__(self) -> None:
+        self.nodes: int = 0
 
     def eval(self, pos: Position) -> int:
+        "Evaluate a position."
         self.nodes += 1
 
         moves = possible_moves(pos)
@@ -15,11 +19,4 @@ class NegaMax:    def __init__(self, transposition_table: HashTable | None = No
                 return -self.eval(passed)
             return end_score(pos)
 
-        t = self.tt.look_up(pos)
-        if t is not None:
-            return t
-
-        score = max(-self.eval(play(pos, move)) for move in moves)
-
-        self.tt.insert(pos, score)
-        return score
+        return max(-self.eval(play(pos, move)) for move in moves)
