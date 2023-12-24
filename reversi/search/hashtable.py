@@ -7,7 +7,7 @@ from .search_result import SearchResult
 @dataclass
 class Bucket:
     "A bucket in a hash table."
-    pos: Position = Position(0, 0)
+    pos: Position = Position()
     result: SearchResult = SearchResult()
 
     def update(
@@ -34,7 +34,7 @@ class Bucket:
 
     def clear(self) -> None:
         "Clear the bucket."
-        self.pos = Position(0, 0)
+        self.pos = Position()
         self.result = SearchResult()
 
 

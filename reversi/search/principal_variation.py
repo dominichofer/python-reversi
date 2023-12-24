@@ -1,5 +1,4 @@
 "Principal variation search."
-from dataclasses import dataclass
 from reversi.game import (
     OpenInterval,
     ClosedInterval,
@@ -18,13 +17,13 @@ from .hashtable import HashTableStub
 from .search_result import SearchResult
 
 
-@dataclass
 class Status:
     "Status of a search."
-    fail_low_limit: int
-    best_score: int = -inf_score
-    best_move: Field = Field.PS
-    lowest_intensity: Intensity = Intensity(64)
+    def __init__(self, fail_low_limit: int) -> None:
+        self.fail_low_limit = fail_low_limit
+        self.best_score = -inf_score
+        self.best_move = Field.PS
+        self.lowest_intensity = Intensity(64)
 
     def update(self, result: SearchResult, move: Field):
         "Updates the status with the result of a move."

@@ -1,5 +1,4 @@
 "Search result."
-from dataclasses import dataclass
 from reversi.game import (
     ClosedInterval,
     Intensity,
@@ -9,12 +8,18 @@ from reversi.game import (
 )
 
 
-@dataclass
 class SearchResult:
     "Result of a search."
-    window: ClosedInterval = ClosedInterval(min_score, max_score)
-    intensity: Intensity = Intensity(-1, 0.0)
-    best_move: Field = Field.PS
+
+    def __init__(
+        self,
+        window: ClosedInterval = ClosedInterval(min_score, max_score),
+        intensity: Intensity = Intensity(-1, 0.0),
+        best_move: Field = Field.PS,
+    ) -> None:
+        self.window = window
+        self.intensity = intensity
+        self.best_move = best_move
 
     def __str__(self) -> str:
         return f"{self.window} d{self.intensity} {self.best_move.name}"
