@@ -19,6 +19,7 @@ from .search_result import SearchResult
 
 class Status:
     "Status of a search."
+
     def __init__(self, fail_low_limit: int) -> None:
         self.fail_low_limit = fail_low_limit
         self.best_score = -inf_score

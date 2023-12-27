@@ -15,7 +15,10 @@ def sorted_by_mobility_and_tt(tt: HashTable):
         t = tt.look_up(pos)
         tt_move = t.best_move if t else Field.PS
         return sorted(
-            moves, key=lambda move: -1 if move == tt_move else len(possible_moves(play(pos, move)))
+            moves,
+            key=lambda move: -1
+            if move == tt_move
+            else len(possible_moves(play(pos, move))),
         )
 
     return sorter

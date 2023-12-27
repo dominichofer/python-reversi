@@ -138,7 +138,9 @@ class SetUpFrame(wx.Frame):
 
         self.model = Model(pos)
         self.controller = Controller(self.model, self.refresh)
-        self.board = BoardPanel(self, Sizes(51, 3, 6, 23, 6), self.model, self.controller)
+        self.board = BoardPanel(
+            self, Sizes(51, 3, 6, 23, 6), self.model, self.controller
+        )
 
         self.single_line_str = wx.TextCtrl(self, size=(484, -1))
         self.player_str = wx.TextCtrl(self, size=(242, -1))
@@ -182,6 +184,7 @@ class SetUpFrame(wx.Frame):
                 self.controller.set(Position(player, opponent))
             except ValueError:
                 pass
+
 
 def setup_position() -> Position:
     "Set up a reversi position."

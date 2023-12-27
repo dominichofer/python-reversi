@@ -27,7 +27,14 @@ class PilPainter(Painter):
     ):
         self.canvas.rectangle((*p1, *p2), fill=fill)
 
-    def circle(self, center: tuple[int, int], radius: int, fill: Color, outline: Color, width: int):
+    def circle(
+        self,
+        center: tuple[int, int],
+        radius: int,
+        fill: Color,
+        outline: Color,
+        width: int,
+    ):
         self.canvas.ellipse(
             (
                 center[0] - radius,

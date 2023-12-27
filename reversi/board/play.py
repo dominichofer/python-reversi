@@ -26,14 +26,16 @@ def flips_in_one_direction(pos: Position, x, y, dx, dy) -> uint64:
 def flips(pos: Position, move: Field) -> uint64:
     "Returns the flipped fields for a move as a bitboard."
     x, y = divmod(move.value, 8)
-    return flips_in_one_direction(pos, x, y, -1, -1) \
-         | flips_in_one_direction(pos, x, y, -1, +0) \
-         | flips_in_one_direction(pos, x, y, -1, +1) \
-         | flips_in_one_direction(pos, x, y, +0, -1) \
-         | flips_in_one_direction(pos, x, y, +0, +1) \
-         | flips_in_one_direction(pos, x, y, +1, -1) \
-         | flips_in_one_direction(pos, x, y, +1, +0) \
-         | flips_in_one_direction(pos, x, y, +1, +1)
+    return (
+        flips_in_one_direction(pos, x, y, -1, -1)
+        | flips_in_one_direction(pos, x, y, -1, +0)
+        | flips_in_one_direction(pos, x, y, -1, +1)
+        | flips_in_one_direction(pos, x, y, +0, -1)
+        | flips_in_one_direction(pos, x, y, +0, +1)
+        | flips_in_one_direction(pos, x, y, +1, -1)
+        | flips_in_one_direction(pos, x, y, +1, +0)
+        | flips_in_one_direction(pos, x, y, +1, +1)
+    )
 
 
 def play(pos: Position, move: Field) -> Position:

@@ -29,7 +29,14 @@ class WxPainter(Painter):
         self.canvas.SetBrush(wx.Brush(wx.Colour(*fill)))
         self.canvas.DrawRectangle(*p1, *p2)
 
-    def circle(self, center: tuple[int, int], radius: int, fill: Color, outline: Color, width: int):
+    def circle(
+        self,
+        center: tuple[int, int],
+        radius: int,
+        fill: Color,
+        outline: Color,
+        width: int,
+    ):
         self.canvas.SetPen(wx.Pen(wx.Colour(*outline), width))
         self.canvas.SetBrush(wx.Brush(wx.Colour(*fill)))
         self.canvas.DrawCircle(*center, radius)

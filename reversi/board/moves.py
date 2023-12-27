@@ -12,6 +12,7 @@ class Moves(uint64):
 
     class Iterator:
         "Iterates over the moves."
+
         def __init__(self, b: uint64):
             self.b = b
 
