@@ -2,6 +2,7 @@
 from .base import OpenInterval, ClosedInterval, intersection
 from .board import (
     Field,
+    bit,
     Position,
     single_line_string,
     multi_line_string,
@@ -35,7 +36,7 @@ from .game import (
     scores,
     scored_positions,
 )
-from .in_out import read_file, write_file, png
+from .in_out import read_file, write_file, png, setup_position
 from .perft import perft
 from .search import (
     NegaMax,

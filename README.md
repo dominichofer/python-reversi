@@ -163,6 +163,10 @@ Additionally a position can be plotted as a png with
 
 which is shown by example in example.ipynb.
 
+A position can be set up interactively from a GUI board, sting or hex values with
+
+	setup_position()
+
 In the folder data are a set of scored positions
 
 	endgame.pos

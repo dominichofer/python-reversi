@@ -1,3 +1,4 @@
+"Bit Manipulation functions for bitboard operations"
 from numpy import uint64, add, subtract
 
 
