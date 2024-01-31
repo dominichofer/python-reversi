@@ -23,3 +23,7 @@ class ScoredPosition:
 
     def __eq__(self, o) -> bool:
         return self.pos == o.pos and self.score == o.score
+
+    def is_score_defined(self) -> bool:
+        "Returns whether the score is defined."
+        return self.score != undefined_score

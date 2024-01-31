@@ -42,7 +42,7 @@ from .search import (
     NegaMax,
     AlphaBeta,
     PrincipalVariation,
-    SearchResult,
+    Result,
     HashTable,
     sorted_by_mobility,
     sorted_by_mobility_and_tt,

@@ -113,7 +113,7 @@ def mobility(pos: Position) -> int:
 
 
 def is_game_over(pos: Position) -> bool:
-    "Returns True if the game is over, False otherwise."
+    "Returns whether the game is over."
     if possible_moves(pos):
         return False
     elif possible_moves(play_pass(pos)):

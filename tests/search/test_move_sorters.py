@@ -4,7 +4,7 @@ from reversi.search import (
     Field,
     Position,
     possible_moves,
-    SearchResult,
+    Result,
     Intensity,
     HashTable,
     sorted_by_mobility,
@@ -21,7 +21,7 @@ class MoveSorterTest(unittest.TestCase):
 
     def test_sorted_by_mobility_and_tt(self):
         pos = Position(0x0000100810000000, 0x0000201008000000)
-        result = SearchResult(ClosedInterval(-1, +1), Intensity(3, 1.0), Field.E6)
+        result = Result(ClosedInterval(-1, +1), Intensity(3, 1.0), Field.E6)
         tt = HashTable(1)
         tt.update(pos, result)  # mark E6 as best move
 

@@ -8,7 +8,7 @@ from reversi.game import (
 )
 
 
-class SearchResult:
+class Result:
     "Result of a search."
 
     def __init__(
@@ -24,8 +24,8 @@ class SearchResult:
     def __str__(self) -> str:
         return f"{self.window} d{self.intensity} {self.best_move.name}"
 
-    def __neg__(self) -> "SearchResult":
-        return SearchResult(-self.window, self.intensity, self.best_move)
+    def __neg__(self) -> "Result":
+        return Result(-self.window, self.intensity, self.best_move)
 
     def is_exact(self) -> bool:
         "Return whether the result is exact."

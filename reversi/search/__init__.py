@@ -5,4 +5,4 @@ from .hashtable import *
 from .move_sorters import *
 from .negamax import *
 from .principal_variation import *
-from .search_result import *
+from .result import *

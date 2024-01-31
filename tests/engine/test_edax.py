@@ -1,18 +1,5 @@
 import unittest
-from reversi.engine.edax import Field, Intensity, EdaxLine, split, flatten
-
-
-class HelperTest(unittest.TestCase):
-    def test_split(self):
-        self.assertEqual(list(split([1, 2, 3, 4, 5], 1)), [[1, 2, 3, 4, 5]])
-        self.assertEqual(list(split([1, 2, 3, 4, 5], 2)), [[1, 2, 3], [4, 5]])
-        self.assertEqual(list(split([1, 2, 3, 4, 5], 3)), [[1, 2], [3, 4], [5]])
-        self.assertEqual(list(split([1, 2, 3, 4, 5], 4)), [[1, 2], [3], [4], [5]])
-        self.assertEqual(list(split([1, 2, 3, 4, 5], 5)), [[1], [2], [3], [4], [5]])
-        self.assertEqual(list(split([1, 2, 3, 4, 5], 6)), [[1], [2], [3], [4], [5]])
-        
-    def test_flatten(self):
-        self.assertEqual(flatten([[1, 2], [3, 4], [5]]), [1, 2, 3, 4, 5])
+from reversi.engine.edax import Field, Intensity, EdaxLine
 
 
 class EdaxOutputTest(unittest.TestCase):
@@ -20,7 +7,6 @@ class EdaxOutputTest(unittest.TestCase):
         line = EdaxLine(
             "  7|   24   -08        0:00.234      63133975  269803312 b3 C1 b1 A3 b2 H3 a5"
         )
-
         self.assertEqual(line.index, 7)
         self.assertEqual(line.intensity, Intensity(24))
         self.assertEqual(line.selectivity, None)
@@ -37,7 +23,6 @@ class EdaxOutputTest(unittest.TestCase):
         line = EdaxLine(
             "  8|25@98%  +03        0:00.094       9940593  105750989 G2 b8 B7 a2 A5 b2 G3"
         )
-
         self.assertEqual(line.index, 8)
         self.assertEqual(line.intensity, Intensity(25, 2.6))
         self.assertEqual(line.selectivity, 98)
@@ -54,7 +39,6 @@ class EdaxOutputTest(unittest.TestCase):
         line = EdaxLine(
             "  1|   14   +18        0:00.000         95959            g8 H7 a8 A6 a4 A7 b6"
         )
-
         self.assertEqual(line.index, 1)
         self.assertEqual(line.intensity, Intensity(14))
         self.assertEqual(line.selectivity, None)
@@ -69,7 +53,6 @@ class EdaxOutputTest(unittest.TestCase):
 
     def test_pass(self):
         line = EdaxLine("  7|   24   -08        0:00.234      63133975  269803312 ps")
-
         self.assertEqual(line.index, 7)
         self.assertEqual(line.intensity, Intensity(24))
         self.assertEqual(line.selectivity, None)

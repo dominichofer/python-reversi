@@ -14,7 +14,7 @@ from reversi.game import (
     end_score,
 )
 from .hashtable import HashTableStub
-from .search_result import SearchResult
+from .result import Result
 
 
 class Status:
@@ -26,43 +26,37 @@ class Status:
         self.best_move = Field.PS
         self.lowest_intensity = Intensity(64)
 
-    def update(self, result: SearchResult, move: Field):
+    def update(self, result: Result, move: Field):
         "Updates the status with the result of a move."
-        self.lowest_intensity = Intensity(
-            min(self.lowest_intensity.depth, result.intensity.depth + 1),
-            min(
-                self.lowest_intensity.confidence_level,
-                result.intensity.confidence_level,
-            ),
-        )
+        self.lowest_intensity = min(self.lowest_intensity, result.intensity + 1)
         if -result.window > self.best_score:
             self.best_score = -result.window.upper
             self.best_move = move
 
-    def result(self) -> SearchResult:
+    def result(self) -> Result:
         "Returns the result of a completed search."
         if self.best_score > self.fail_low_limit:
             lower = self.best_score
         else:
             lower = min_score
-        return SearchResult(
+        return Result(
             ClosedInterval(lower, self.best_score),
             self.lowest_intensity,
             self.best_move,
         )
 
 
-def beta_cut(result: SearchResult, move: Field) -> SearchResult:
+def beta_cut(result: Result, move: Field) -> Result:
     "Returns a beta cut result."
-    return SearchResult(
+    return Result(
         ClosedInterval(-result.window.upper, max_score), result.intensity + 1, move
     )
 
 
-def end_result(pos: Position) -> SearchResult:
+def end_result(pos: Position) -> Result:
     "Returns the result of terminal position."
     s = end_score(pos)
-    return SearchResult(ClosedInterval(s, s), Intensity(pos.empty_count()), Field.PS)
+    return Result(ClosedInterval(s, s), Intensity(pos.empty_count()), Field.PS)
 
 
 class PrincipalVariation:
@@ -81,7 +75,7 @@ class PrincipalVariation:
         pos: Position,
         window: OpenInterval | None = None,
         intensity: Intensity | None = None,
-    ) -> SearchResult:
+    ) -> Result:
         "Evaluate a position."
         return self.pvs(
             pos,
@@ -91,7 +85,7 @@ class PrincipalVariation:
 
     def pvs(
         self, pos: Position, window: OpenInterval, intensity: Intensity
-    ) -> SearchResult:
+    ) -> Result:
         "Principal variation search."
         self.nodes += 1
 
@@ -138,7 +132,7 @@ class PrincipalVariation:
 
     def zws(
         self, pos: Position, window: OpenInterval, intensity: Intensity
-    ) -> SearchResult:
+    ) -> Result:
         "Zero-window search."
         self.nodes += 1
 
@@ -171,10 +165,10 @@ class PrincipalVariation:
 
     def transposition_cut(
         self, pos: Position, window: OpenInterval, intensity: Intensity
-    ) -> SearchResult | None:
+    ) -> Result | None:
         "Returns a transposition cut result if one fits. None otherwise."
         t = self.tt.look_up(pos)
         if t and t.intensity >= intensity:
-            if t.is_exact() or t.window > window or t.window < window:
+            if t.is_exact() or not t.window.overlaps(window):
                 return t
         return None

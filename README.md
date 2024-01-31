@@ -103,11 +103,11 @@ To conduct a search, several algorithms, wrapped in classes are available
 	class PrincipalVariation:
 		nodes: int
 		__init__(move_sorter, transposition_table, cutters)
-		eval(Position, window: OpenInterval, Intensity) -> SearchResult
+		eval(Position, window: OpenInterval, Intensity) -> Result
 
 where
 
-	class SearchResult:
+	class Result:
 		window: ClosedInterval
 		intensity: Intensity
 		best_move: Field
@@ -122,8 +122,8 @@ To enhance a search, there's a hash table which can be used as a transposition t
 
 	class HashTable:
 		__init__(size: int)
-		update(Position, SearchResult)
-		look_up(Position) -> SearchResult
+		update(Position, Result)
+		look_up(Position) -> Result
 		clear()
 
 and two move sorters

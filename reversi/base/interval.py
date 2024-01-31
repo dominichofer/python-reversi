@@ -72,12 +72,12 @@ class ClosedInterval:
         return self.lower <= value <= self.upper
 
     def overlaps(self, o: OpenInterval) -> bool:
-        "Check if this interval overlaps with another open interval"
+        "Return whether the intervals overlap."
         return self.upper > o.lower and self.lower < o.upper
 
 
 def intersection(l, r):
-    "Find the intersection of two intervals"
+    "Return the intersection of two intervals."
     if isinstance(l, OpenInterval) and isinstance(r, OpenInterval):
         return OpenInterval(max(l.lower, r.lower), min(l.upper, r.upper))
     if isinstance(l, ClosedInterval) and isinstance(r, ClosedInterval):

@@ -1,19 +1,19 @@
 "Hash table for storing search results."
 from dataclasses import dataclass
 from reversi.game import Position, intersection
-from .search_result import SearchResult
+from .result import Result
 
 
 @dataclass
 class Bucket:
     "A bucket in a hash table."
     pos: Position = Position()
-    result: SearchResult = SearchResult()
+    result: Result = Result()
 
     def update(
         self,
         pos: Position,
-        new_result: SearchResult,
+        new_result: Result,
     ) -> bool:
         "Update the bucket with a new result. Return whether the result was updated."
         if new_result.intensity > self.result.intensity:
@@ -26,7 +26,7 @@ class Bucket:
             return True
         return False
 
-    def look_up(self, pos: Position) -> SearchResult | None:
+    def look_up(self, pos: Position) -> Result | None:
         "Return the result for a position or None."
         if pos == self.pos:
             return self.result
@@ -35,7 +35,7 @@ class Bucket:
     def clear(self) -> None:
         "Clear the bucket."
         self.pos = Position()
-        self.result = SearchResult()
+        self.result = Result()
 
 
 class HashTable:
@@ -44,12 +44,12 @@ class HashTable:
     def __init__(self, size: int) -> None:
         self.buckets = [Bucket()] * size
 
-    def update(self, pos: Position, new_result: SearchResult) -> bool:
+    def update(self, pos: Position, new_result: Result) -> bool:
         "Update the hash table with a new result. Return whether the result was updated."
         index = hash(pos) % len(self.buckets)
         return self.buckets[index].update(pos, new_result)
 
-    def look_up(self, pos: Position) -> SearchResult | None:
+    def look_up(self, pos: Position) -> Result | None:
         "Return the result for a position or None."
         index = hash(pos) % len(self.buckets)
         return self.buckets[index].look_up(pos)

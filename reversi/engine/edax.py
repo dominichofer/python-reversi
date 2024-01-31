@@ -4,7 +4,6 @@ from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 from typing import Iterable
 from pathlib import Path
-from secrets import token_hex
 import locale
 from reversi.search import (
     ClosedInterval,
@@ -12,46 +11,10 @@ from reversi.search import (
     Position,
     Player,
     Intensity,
-    SearchResult,
+    Result,
 )
 from .engine import Engine
-
-
-def split(data: Iterable, max_sections: int):
-    "Splits data into sections."
-    data = list(data)
-
-    elements_per_section, remainder = divmod(len(data), max_sections)
-    sections = min(len(data), max_sections)
-    for i in range(remainder):
-        yield data[
-            i * (elements_per_section + 1) : (i + 1) * (elements_per_section + 1)
-        ]
-    for i in range(remainder, sections):
-        yield data[
-            i * elements_per_section
-            + remainder : (i + 1) * elements_per_section
-            + remainder
-        ]
-
-
-def flatten(data: Iterable[Iterable]) -> list:
-    "Flattens data."
-    return [x for xs in data for x in xs]
-
-
-class UniqueTempFile:
-    "Context manager that creates a temporary file and deletes it when done."
-
-    def __init__(self, directory: Path) -> None:
-        self.filename: Path = Path(directory) / f"tmp_{token_hex(16)}"
-
-    def __enter__(self):
-        return self.filename
-
-    def __exit__(self, *_):
-        self.filename.unlink()
-        return False
+from .helpers import split, flatten, UniqueTempFile
 
 
 class EdaxLine:
@@ -85,7 +48,11 @@ class EdaxLine:
         pv = rest[53:73].split()
         self.pv = [Field[x.upper()] for x in pv if x != ""]
         self.best_move = self.pv[0] if self.pv else Field.PS
-        self.search_result = SearchResult(
+
+    @property
+    def result(self) -> Result:
+        "Returns the search result."
+        return Result(
             ClosedInterval(self.score, self.score),
             self.intensity,
             self.best_move,
@@ -105,7 +72,7 @@ class EdaxLine:
                 f"speed: {self.speed:n} N/s" if self.speed else "speed: ? N/s",
                 f"pv: {pv}",
                 f"best_move: {self.best_move.name}",
-                f"search_result: {self.search_result}",
+                f"result: {self.result}",
             ]
         )
 
@@ -128,7 +95,7 @@ class Edax(Engine, Player):
         level: Search using limited depth.
         multi_instance: Whether to use multiple instances of Edax concurrently.
         """
-        self.exe = Path(exe_path)
+        self.exe = Path(exe_path).resolve()
         self.hash_table_size = hash_table_size
         self.tasks = tasks
         self.level = level
@@ -141,46 +108,50 @@ class Edax(Engine, Player):
         )
         return " ".join(result.stderr.split()[0:3])
 
+    def __command(self, temp_file: Path) -> list[str]:
+        command = [str(self.exe), "-solve", str(temp_file)]
+        if self.hash_table_size is not None:
+            command += ["-h", str(self.hash_table_size)]
+        if self.tasks is not None:
+            command += ["-n", str(self.tasks)]
+        if self.level is not None:
+            command += ["-l", str(self.level)]
+        return command
+
     def solve_many_native(self, pos: Iterable[Position]) -> list[EdaxLine]:
-        "Solves positions using Edax."
-        with UniqueTempFile(self.exe.parent) as tmp_file:
-            tmp_file.write_text("\n".join(str(p) for p in pos))
-
-            command = [self.exe, "-solve", tmp_file]
-            if self.hash_table_size is not None:
-                command += ["-h", str(self.hash_table_size)]
-            if self.tasks is not None:
-                command += ["-n", str(self.tasks)]
-            if self.level is not None:
-                command += ["-l", str(self.level)]
-
+        "Solves positions."
+        with UniqueTempFile(self.exe.parent) as temp_file:
+            temp_file.write_text("\n".join(str(p) for p in pos))
             result = subprocess.run(
-                command, cwd=self.exe.parent, capture_output=True, check=True, text=True
+                self.__command(temp_file),
+                cwd=self.exe.parent,
+                capture_output=True,
+                check=True,
+                text=True,
             )
         return [EdaxLine(l) for l in result.stdout.split("\n")[2:-4]]
 
     def solve_native(self, pos: Position) -> EdaxLine:
-        "Solves a position using Edax."
+        "Solves a position."
         return self.solve_many_native([pos])[0]
 
-    def __solve_many_search_result(self, pos: Iterable[Position]) -> list[SearchResult]:
-        return [x.search_result for x in self.solve_many_native(pos)]
+    def __solve_many_result(self, pos: Iterable[Position]) -> list[Result]:
+        return [x.result for x in self.solve_many_native(pos)]
 
-    # Add missing import statements
-    def solve(self, pos: Position) -> SearchResult:
-        return self.__solve_many_search_result([pos])[0]
+    def solve(self, pos: Position) -> Result:
+        return self.__solve_many_result([pos])[0]
 
-    def solve_many(self, pos: Iterable[Position]) -> list[SearchResult]:
+    def solve_many(self, pos: Iterable[Position]) -> list[Result]:
         if self.multi_instance:
             with ThreadPool() as pool:
                 return flatten(
                     pool.map(
-                        self.__solve_many_search_result,
+                        self.__solve_many_result,
                         split(pos, cpu_count()),
                     )
                 )
         else:
-            return self.__solve_many_search_result(pos)
+            return self.__solve_many_result(pos)
 
     def choose_move(self, pos: Position) -> Field:
         return self.solve(pos).best_move
