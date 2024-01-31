@@ -1,5 +1,5 @@
 "Game class for Reversi."
-from reversi.board import Position, Field, play
+from reversi.board import Position, Field, possible_moves, play, play_pass
 
 
 class Game:
@@ -8,8 +8,17 @@ class Game:
     def __init__(
         self, start: Position = Position.start(), moves: list[Field] | None = None
     ):
-        self.__start: Position = start
+        self.__start: Position = self.__implicit_pass(start)
         self.__moves: list[Field] = moves or []
+
+    @staticmethod
+    def __implicit_pass(pos: Position) -> Position:
+        "Return a pass if needed."
+        if not possible_moves(pos):
+            passed = play_pass(pos)
+            if possible_moves(passed):
+                return passed
+        return pos
 
     @staticmethod
     def from_string(string: str) -> "Game":
@@ -45,7 +54,7 @@ class Game:
         pos = self.__start
         yield pos
         for move in self.__moves:
-            pos = play(pos, move)
+            pos = self.__implicit_pass(play(pos, move))
             yield pos
 
     def last_position(self) -> Position:
