@@ -38,6 +38,12 @@ class Intensity:
             self.depth >= o.depth and self.confidence_level > o.confidence_level
         )
 
+    def __le__(self, o) -> bool:
+        return self.depth <= o.depth and self.confidence_level <= o.confidence_level
+
+    def __ge__(self, o) -> bool:
+        return self.depth >= o.depth and self.confidence_level >= o.confidence_level
+
     def __add__(self, depth: int) -> "Intensity":
         return Intensity(self.depth + depth, self.confidence_level)
 

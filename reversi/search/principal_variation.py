@@ -28,28 +28,31 @@ class Status:
 
     def update(self, result: Result, move: Field):
         "Updates the status with the result of a move."
-        self.lowest_intensity = min(self.lowest_intensity, result.intensity + 1)
-        if -result.window > self.best_score:
-            self.best_score = -result.window.upper
+        self.lowest_intensity = min(self.lowest_intensity, result.intensity)
+        if result.window.upper > self.best_score:
+            self.best_score = result.window.upper
             self.best_move = move
 
     def result(self) -> Result:
         "Returns the result of a completed search."
         if self.best_score > self.fail_low_limit:
-            lower = self.best_score
+            return Result(
+                ClosedInterval(self.best_score, self.best_score),
+                self.lowest_intensity + 1,
+                self.best_move,
+            )
         else:
-            lower = min_score
-        return Result(
-            ClosedInterval(lower, self.best_score),
-            self.lowest_intensity,
-            self.best_move,
-        )
+            return Result(
+                ClosedInterval(min_score, self.best_score),
+                self.lowest_intensity + 1,
+                self.best_move,
+            )
 
 
 def beta_cut(result: Result, move: Field) -> Result:
     "Returns a beta cut result."
     return Result(
-        ClosedInterval(-result.window.upper, max_score), result.intensity + 1, move
+        ClosedInterval(result.window.lower, max_score), result.intensity + 1, move
     )
 
 
@@ -83,9 +86,7 @@ class PrincipalVariation:
             intensity or Intensity(pos.empty_count()),
         )
 
-    def pvs(
-        self, pos: Position, window: OpenInterval, intensity: Intensity
-    ) -> Result:
+    def pvs(self, pos: Position, window: OpenInterval, intensity: Intensity) -> Result:
         "Principal variation search."
         self.nodes += 1
 
@@ -108,31 +109,25 @@ class PrincipalVariation:
         for move in self.sorted_moves(pos, moves):
             if not first:
                 zero_window = OpenInterval(window.lower, window.lower + 1)
-                result = self.zws(play(pos, move), -zero_window, intensity - 1)
-                if -result.window < zero_window:
+                result = -self.zws(play(pos, move), -zero_window, intensity - 1)
+                if result.window < window:
                     status.update(result, move)
                     continue
-                if -result.window > window:  # beta cut
-                    ret = beta_cut(result, move)
-                    self.tt.update(pos, ret)
-                    return ret
 
-            result = self.pvs(play(pos, move), -window, intensity - 1)
-            if -result.window > window:  # beta cut
+            result = -self.pvs(play(pos, move), -window, intensity - 1)
+            if result.window > window:  # beta cut
                 ret = beta_cut(result, move)
                 self.tt.update(pos, ret)
                 return ret
             status.update(result, move)
-            window.lower = max(window.lower, -result.window.upper)
+            window.lower = max(window.lower, result.window.lower)
             first = False
 
         ret = status.result()
         self.tt.update(pos, ret)
         return ret
 
-    def zws(
-        self, pos: Position, window: OpenInterval, intensity: Intensity
-    ) -> Result:
+    def zws(self, pos: Position, window: OpenInterval, intensity: Intensity) -> Result:
         "Zero-window search."
         self.nodes += 1
 
@@ -152,8 +147,8 @@ class PrincipalVariation:
 
         status = Status(window.lower)
         for move in self.sorted_moves(pos, moves):
-            result = self.zws(play(pos, move), -window, intensity - 1)
-            if -result.window > window:  # beta cut
+            result = -self.zws(play(pos, move), -window, intensity - 1)
+            if result.window > window:  # beta cut
                 ret = beta_cut(result, move)
                 self.tt.update(pos, ret)
                 return ret
