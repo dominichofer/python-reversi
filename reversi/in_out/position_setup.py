@@ -142,16 +142,18 @@ class SetUpFrame(wx.Frame):
             self, Sizes(51, 3, 6, 23, 6), self.model, self.controller
         )
 
-        self.single_line_str = wx.TextCtrl(self, size=(484, -1))
-        self.player_str = wx.TextCtrl(self, size=(242, -1))
-        self.opponent_str = wx.TextCtrl(self, size=(242, -1))
+        self.single_line_str = wx.TextCtrl(self, size=(484, -1), style = wx.TE_PROCESS_ENTER)
+        self.player_str = wx.TextCtrl(self, size=(242, -1), style = wx.TE_PROCESS_ENTER)
+        self.opponent_str = wx.TextCtrl(self, size=(242, -1), style = wx.TE_PROCESS_ENTER)
 
         font = wx.Font(10, wx.MODERN, wx.NORMAL, wx.NORMAL, faceName="Consolas")
         self.single_line_str.SetFont(font)
         self.player_str.SetFont(font)
         self.opponent_str.SetFont(font)
 
-        self.Bind(wx.EVT_TEXT_ENTER, self.on_enter)
+        self.Bind(wx.EVT_TEXT_ENTER, self.on_single_line_enter, self.single_line_str)
+        self.Bind(wx.EVT_TEXT_ENTER, self.on_player_opponent_enter, self.player_str)
+        self.Bind(wx.EVT_TEXT_ENTER, self.on_player_opponent_enter, self.opponent_str)
 
         grid = wx.GridBagSizer(0, 0)
         grid.Add(self.board, pos=(0, 0), span=(1, 2), flag=wx.ALIGN_CENTER)
@@ -172,18 +174,19 @@ class SetUpFrame(wx.Frame):
         self.player_str.SetValue(f"0x{self.model.pos.player:016x}")
         self.opponent_str.SetValue(f"0x{self.model.pos.opponent:016x}")
 
-    def on_enter(self, event):
-        "Enter was pressed in one of the text fields."
-        if event.EventObject == self.single_line_str:
-            pos = Position.from_string(self.single_line_str.GetValue())
-            self.controller.set(pos)
-        elif event.EventObject in (self.player_str, self.opponent_str):
-            try:
-                player = int(self.player_str.GetValue(), 16)
-                opponent = int(self.opponent_str.GetValue(), 16)
-                self.controller.set(Position(player, opponent))
-            except ValueError:
-                pass
+    def on_single_line_enter(self, event):
+        "Enter was pressed in the single line text field."
+        pos = Position.from_string(self.single_line_str.GetValue())
+        self.controller.set(pos)
+
+    def on_player_opponent_enter(self, event):
+        "Enter was pressed in the player or opponent text field."
+        try:
+            player = int(self.player_str.GetValue(), 16)
+            opponent = int(self.opponent_str.GetValue(), 16)
+            self.controller.set(Position(player, opponent))
+        except ValueError:
+            pass
 
 
 def setup_position() -> Position:
