@@ -29,8 +29,13 @@ class Intensity:
         return self.depth == o.depth and self.confidence_level == o.confidence_level
 
     def __lt__(self, o) -> bool:
-        return self.depth < o.depth or (
-            self.depth == o.depth and self.confidence_level < o.confidence_level
+        return (self.depth < o.depth and self.confidence_level <= o.confidence_level) or (
+            self.depth <= o.depth and self.confidence_level < o.confidence_level
+        )
+
+    def __gt__(self, o) -> bool:
+        return (self.depth > o.depth and self.confidence_level >= o.confidence_level) or (
+            self.depth >= o.depth and self.confidence_level > o.confidence_level
         )
 
     def __add__(self, depth: int) -> "Intensity":
