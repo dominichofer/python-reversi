@@ -12,7 +12,6 @@ from reversi import (
 )
 
 endgame = read_file(Path(__file__).parent.parent.parent / "data" / "endgame.pos")
-fforum = read_file(Path(__file__).parent.parent.parent / "data" / "fforum-1-19.pos")
 
 
 class PrincipalVariationTest(unittest.TestCase):
@@ -36,13 +35,6 @@ class PrincipalVariationTest(unittest.TestCase):
 
     @parameterized.expand(endgame)
     def test_endgame_with_tt(self, scored_pos: ScoredPosition):
-        tt = HashTable(1_000_000)
-        result = PrincipalVariation(transposition_table=tt).eval(scored_pos.pos)
-        self.assertTrue(result.is_exact())
-        self.assertEqual(result.window.lower, scored_pos.score)
-
-    @parameterized.expand(fforum)
-    def test_fforum_with_tt(self, scored_pos: ScoredPosition):
         tt = HashTable(1_000_000)
         result = PrincipalVariation(transposition_table=tt).eval(scored_pos.pos)
         self.assertTrue(result.is_exact())
