@@ -21,7 +21,10 @@ class RandomPlayer(Player):
     "A player that chooses a random move."
 
     def choose_move(self, pos: Position) -> Field:
-        return choice(list(possible_moves(pos)))
+        moves = list(possible_moves(pos))
+        if not moves:
+            return Field.PS
+        return choice(moves)
 
     def choose_moves(self, pos: Iterable[Position]) -> list[Field]:
         return [self.choose_move(p) for p in pos]
