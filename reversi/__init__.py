@@ -18,6 +18,8 @@ from .engine import (
     Engine,
     Edax,
     EdaxLine,
+    Cassandra,
+    CassandraLine,
 )
 from .game import (
     max_score,
