@@ -1,6 +1,6 @@
 "Hash table for storing search results."
 from dataclasses import dataclass
-from reversi.game import Position, intersection
+from reversi.game import Position
 from .result import Result
 
 
@@ -16,15 +16,9 @@ class Bucket:
         new_result: Result,
     ) -> bool:
         "Update the bucket with a new result. Return whether the result was updated."
-        if new_result.intensity > self.result.intensity:
-            if pos == self.pos and new_result.intensity == self.result.intensity:
-                self.result.best_move = new_result.best_move
-                self.result.window = intersection(new_result.window, self.result.window)
-            else:
-                self.pos = pos
-                self.result = new_result
-            return True
-        return False
+        self.pos = pos
+        self.result = new_result
+        return True
 
     def look_up(self, pos: Position) -> Result | None:
         "Return the result for a position or None."
