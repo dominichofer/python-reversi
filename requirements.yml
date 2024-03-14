@@ -1,8 +1,9 @@
 name: reversi
 channels:
   - conda-forge
-  - default
 dependencies:
   - numpy
   - pillow
   - wxpython
+  - pytest
+  - parameterized

@@ -9,9 +9,6 @@ version = "1.0.1"
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.yml"] }
 
-[project.optional-dependencies]
-test = ["pytest", "parameterized"]
-
 [tool.ruff]
 line-length = 100
 
