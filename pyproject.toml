@@ -7,10 +7,10 @@ name = "reversi"
 version = "1.0.1"
 
 [tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+dependencies = { file = ["requirements.yml"] }
 
-[tool.setuptools.dynamic.optional-dependencies]
-test = { file = ["requirements-test.txt"] }
+[project.optional-dependencies]
+test = ["pytest", "parameterized"]
 
 [tool.ruff]
 line-length = 100
