@@ -1,10 +1,16 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >= 64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "reversi"
 version = "1.0.1"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.dynamic.optional-dependencies]
+test = { file = ["requirements-test.txt"] }
 
 [tool.ruff]
 line-length = 100
