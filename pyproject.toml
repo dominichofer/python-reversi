@@ -6,12 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "reversi"
 version = "1.0.1"
 dependencies = [
+    # Runtime dependencies
     "numpy",
     "pillow",
     "wxpython",
+    # Test dependencies
     "pytest",
     "parameterized",
 ]
+
 [tool.ruff]
 line-length = 100
 

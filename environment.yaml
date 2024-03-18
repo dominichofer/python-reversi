@@ -1,0 +1,12 @@
+name: reversi
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Runtime dependencies
+  - numpy
+  - pillow
+  - wxpython
+  # Test dependencies
+  - pytest
+  - parameterized

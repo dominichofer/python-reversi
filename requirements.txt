@@ -1,5 +1,0 @@
-numpy
-pillow
-wxpython
-pytest
-parameterized
