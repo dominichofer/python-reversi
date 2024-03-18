@@ -1,9 +1,0 @@
-name: reversi
-channels:
-  - conda-forge
-dependencies:
-  - numpy
-  - pillow
-  - wxpython
-  - pytest
-  - parameterized
