@@ -1,4 +1,5 @@
 "Edax wrapper."
+
 import subprocess
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
@@ -59,6 +60,16 @@ class EdaxLine:
         )
 
     def __str__(self) -> str:
+        depth = (
+            f"{self.intensity.depth}@{self.selectivity}%"
+            if self.selectivity
+            else f"{self.intensity.depth} "
+        )
+        speed = self.speed if self.speed else ""
+        pv = " ".join(x.name for x in self.pv)
+        return f"{self.index:3}|{depth:>6}  {self.score:+03} {self.time:>15} {self.nodes:13} {speed:10} {pv}"
+
+    def pretty_string(self) -> str:
         locale.setlocale(locale.LC_ALL, "")
         pv = " ".join(x.name for x in self.pv)
         return "\n".join(
@@ -103,9 +114,7 @@ class Edax(Engine, Player):
 
     @property
     def name(self) -> str:
-        result = subprocess.run(
-            [self.exe, "-v", "-h"], capture_output=True, check=True, text=True
-        )
+        result = subprocess.run([self.exe, "-v", "-h"], capture_output=True, check=True, text=True)
         return " ".join(result.stderr.split()[0:3])
 
     def __command(self, temp_file: Path) -> list[str]:
