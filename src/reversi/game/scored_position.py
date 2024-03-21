@@ -1,4 +1,5 @@
 "A position with a score."
+
 from dataclasses import dataclass
 from reversi.board import Position
 from .score import undefined_score
@@ -7,6 +8,7 @@ from .score import undefined_score
 @dataclass
 class ScoredPosition:
     "A position with a score."
+
     pos: Position
     score: int = undefined_score
 
@@ -23,6 +25,10 @@ class ScoredPosition:
 
     def __eq__(self, o) -> bool:
         return self.pos == o.pos and self.score == o.score
+
+    def empty_count(self) -> int:
+        "Returns the number of empty fields."
+        return self.pos.empty_count()
 
     def is_score_defined(self) -> bool:
         "Returns whether the score is defined."
