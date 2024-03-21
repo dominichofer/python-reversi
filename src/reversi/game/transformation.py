@@ -51,10 +51,11 @@ def scores(arg) -> Iterable[int]:
 def scored_positions(*args) -> Iterable[ScoredPosition]:
     """
     Returns a generator of ScoredPositions from the arguments.
-    It can act as
-    scored_positions(ScoredGame),
-    scored_positions(Iterable[ScoredGame]),
-    scored_positions(Iterable[Position], Iterable[int]).
+    It can act on
+    ScoredGame,
+    Iterable[int],
+    Iterable[Position],
+    Iterable[ScoredGame].
     """
     if len(args) == 1:
         arg = args[0]

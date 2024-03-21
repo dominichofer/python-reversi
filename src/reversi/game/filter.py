@@ -5,7 +5,12 @@ from .scored_position import ScoredPosition
 
 
 def empty_count_filtered(arg: Iterable, empty_count: int) -> Iterable:
-    """Filter an iterable of positions by empty count."""
+    """
+    Filter an iterable of positions by empty count.
+    It can act on:
+    Position,
+    ScoredPosition.
+    """
     for x in arg:
         if isinstance(x, Position):
             if x.empty_count() == empty_count:
@@ -16,7 +21,12 @@ def empty_count_filtered(arg: Iterable, empty_count: int) -> Iterable:
 
 
 def empty_count_range_filtered(arg: Iterable, lower: int, upper: int) -> Iterable:
-    """Filter an iterable of positions by empty count."""
+    """
+    Filter an iterable of positions by a range of empty counts.
+    It can act on:
+    Position,
+    ScoredPosition.
+    """
     for x in arg:
         if isinstance(x, Position):
             if lower <= x.empty_count() <= upper:
