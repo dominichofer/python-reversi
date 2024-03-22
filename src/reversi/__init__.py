@@ -92,7 +92,6 @@ __all__ = [
     "read_file",
     "write_file",
     "png",
-    "setup_position",
     "perft",
     "NegaMax",
     "AlphaBeta",
