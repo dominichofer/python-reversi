@@ -40,7 +40,7 @@ from .game import (
     scores,
     scored_positions,
 )
-from .in_out import read_file, write_file, png, setup_position
+from .in_out import read_file, write_file, png
 from .perft import perft
 from .search import (
     NegaMax,
