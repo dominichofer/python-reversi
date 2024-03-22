@@ -9,7 +9,7 @@ dependencies = [
     # Runtime dependencies
     "numpy",
     "pillow",
-    "wxpython",
+    #"wxpython",
     # Test dependencies
     "pytest",
     "parameterized",
