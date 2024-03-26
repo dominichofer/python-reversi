@@ -1,6 +1,4 @@
 from typing import Iterable
-from pathlib import Path
-from secrets import token_hex
 
 
 def split(data: Iterable, max_sections: int):
@@ -24,17 +22,3 @@ def split(data: Iterable, max_sections: int):
 def flatten(data: Iterable[Iterable]) -> list:
     "Flattens data."
     return [x for xs in data for x in xs]
-
-
-class UniqueTempFile:
-    "Context manager that creates a temporary file and deletes it when done."
-
-    def __init__(self, directory: Path) -> None:
-        self.filename: Path = Path(directory) / f"tmp_{token_hex(16)}"
-
-    def __enter__(self):
-        return self.filename
-
-    def __exit__(self, *_):
-        self.filename.unlink()
-        return False

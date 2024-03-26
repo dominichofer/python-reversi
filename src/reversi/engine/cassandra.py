@@ -1,5 +1,7 @@
 "Cassandra wrapper."
+
 import subprocess
+import tempfile
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 from typing import Iterable
@@ -15,7 +17,7 @@ from reversi.search import (
     Result,
 )
 from .engine import Engine
-from .helpers import split, flatten, UniqueTempFile
+from .helpers import split, flatten
 
 
 def parse_int(string: str) -> int:
@@ -27,9 +29,7 @@ class CassandraLine:
     "Line of Cassandra's output."
 
     def __init__(self, string: str):
-        index, depth, evl, _, time, nodes, nps, pv = [
-            s.strip() for s in string.split("|")
-        ]
+        index, depth, evl, _, time, nodes, nps, pv = [s.strip() for s in string.split("|")]
 
         self.index = parse_int(index)
         self.intensity = Intensity.from_string(depth)
@@ -88,12 +88,11 @@ class Cassandra(Engine, Player):
         self.intensity = intensity
         self.multi_instance = multi_instance
 
-    @property
     def name(self) -> str:
         return "Cassandra"
 
-    def __command(self, temp_file: Path) -> list[str]:
-        command = [str(self.exe), "-m", str(self.model), "-solve", str(temp_file)]
+    def __command(self, temp_file: str) -> list[str]:
+        command = [str(self.exe), "-m", str(self.model), "-solve", temp_file]
         if self.window is not None:
             command += ["-w", str(self.window)]
         if self.intensity is not None:
@@ -106,12 +105,12 @@ class Cassandra(Engine, Player):
 
     def solve_many_native(self, pos: Iterable[Position]) -> list[CassandraLine]:
         "Solves positions."
-        with UniqueTempFile(self.exe.parent) as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file.write_text("\n".join(str(p) for p in pos))
-            result = subprocess.run(
-                self.__command(temp_file), capture_output=True, check=True, text=True
-            )
-        return [CassandraLine(l) for l in result.stdout.split("\n")[2:-4]]
+        result = subprocess.run(
+            self.__command(temp_file.name), capture_output=True, check=True, text=True
+        )
+        return [CassandraLine(line) for line in result.stdout.split("\n")[2:-4]]
 
     def solve_native(self, pos: Position) -> CassandraLine:
         "Solves a position."

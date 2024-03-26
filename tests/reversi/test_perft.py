@@ -1,5 +1,4 @@
 import unittest
-import time
 from parameterized import parameterized
 from reversi import perft
 

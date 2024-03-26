@@ -1,5 +1,5 @@
 import unittest
-from reversi.engine.edax import split, flatten
+from reversi.engine.helpers import split, flatten  # type: ignore
 
 
 class HelperTest(unittest.TestCase):

@@ -7,7 +7,6 @@ from reversi.search import Field, Position, Result
 class Engine(ABC):
     "Engine interface."
 
-    @property
     @abstractmethod
     def name(self) -> str:
         "Returns the name of the engine."
@@ -18,7 +17,7 @@ class Engine(ABC):
 
     @abstractmethod
     def solve_many(self, pos: Iterable[Position]) -> list[Result]:
-        "Returns the solutions of the positions."
+        "Returns the solution(s) of the position(s)."
 
     @abstractmethod
     def choose_move(self, pos: Position) -> Field:

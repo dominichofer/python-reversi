@@ -9,7 +9,7 @@ dependencies = [
     # Runtime dependencies
     "numpy",
     "pillow",
-    #"wxpython",
+    "edax @ git+https://github.com/dominichofer/python-edax",
     # Test dependencies
     "pytest",
     "parameterized",
