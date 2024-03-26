@@ -2,7 +2,7 @@
 
 ## Description
 This is a Python library for Reversi.
-It requires at least Python 3.8, and the libraries listed in environment.yml or pyproject.toml.
+It requires at least Python 3.10, and the libraries listed in pyproject.toml.
 
 ## Installation
 Run `pip install .` to install the package and all its dependencies.
