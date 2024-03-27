@@ -56,7 +56,7 @@ class EdaxLine:
                 f"score: {self.score:+03}",
                 f"time: {self.time}",
                 f"nodes: {self.nodes:n}",
-                f"nodes_per_second: {nodes_per_second:n}",
+                f"nodes_per_second: {nodes_per_second}",
                 f"pv: {pv}",
                 f"best_move: {self.best_move.name}",
                 f"result: {self.result}",
