@@ -13,6 +13,16 @@ class TestIntensity(unittest.TestCase):
         i = Intensity(10, 1.0)
         self.assertEqual(i, Intensity.from_string(str(i)))
 
+    def test_bytes_without_confidence_level(self):
+        original = Intensity(10)
+        intensity = bytes(original)
+        round_trip = Intensity.from_bytes(intensity)
+        self.assertEqual(original, round_trip)
+
+    def test_bytes_with_confidence_level(self):
+        i = Intensity(10, 1.0)
+        self.assertEqual(i, Intensity.from_bytes(bytes(i)))
+
     def test_lt(self):
         self.assertLess(Intensity(5), Intensity(10))
         self.assertLess(Intensity(10, 1.0), Intensity(10))
