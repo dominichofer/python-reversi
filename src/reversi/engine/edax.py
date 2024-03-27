@@ -14,8 +14,27 @@ from .engine import Engine
 class EdaxLine:
     "Line of Edax' output."
 
-    def __init__(self, line: edax.Line):
-        self.index = line.index
+    def __init__(
+        self,
+        index: int,
+        intensity: Intensity,
+        score: int,
+        time: str,
+        nodes: int,
+        nodes_per_second: int | None,
+        pv: list[Field],
+    ) -> None:
+        self.index = index
+        self.intensity = intensity
+        self.score = score
+        self.time = time
+        self.nodes = nodes
+        self.nodes_per_second = nodes_per_second
+        self.pv = pv
+        self.best_move = pv[0] if pv else Field.PS
+
+    @staticmethod
+    def from_edax_line(line: edax.Line):
         confidence_level = {
             73: 1.1,
             87: 1.5,
@@ -24,13 +43,17 @@ class EdaxLine:
             99: 3.3,
             None: float("inf"),
         }[line.selectivity]
-        self.intensity = Intensity(line.depth, confidence_level)
-        self.score = line.score
-        self.time = line.time
-        self.nodes = line.nodes
-        self.nodes_per_second = line.nodes_per_second
-        self.pv = [Field[x.upper()] for x in line.pv]
-        self.best_move = self.pv[0] if self.pv else Field.PS
+        intensity = Intensity(line.depth, confidence_level)
+        pv = [Field[x.upper()] for x in line.pv]
+        return EdaxLine(
+            line.index,
+            intensity,
+            line.score,
+            line.time,
+            line.nodes,
+            line.nodes_per_second,
+            pv,
+        )
 
     @staticmethod
     def from_bytes(data: bytes) -> "EdaxLine":
@@ -38,10 +61,10 @@ class EdaxLine:
         index = int.from_bytes(data[:4], "big")
         data = data[4:]
 
-        intensity = Intensity.from_bytes(data[:8])
-        data = data[8:]
+        intensity = Intensity.from_bytes(data[:9])
+        data = data[9:]
 
-        score = int.from_bytes(data[:4], "big")
+        score = int.from_bytes(data[:4], "big", signed=True)
         data = data[4:]
 
         time_length = int.from_bytes(data[:4], "big")
@@ -51,14 +74,13 @@ class EdaxLine:
         nodes = int.from_bytes(data[:4], "big")
         data = data[4:]
 
-        nodes_per_second = int.from_bytes(data[:4], "big")
+        nodes_per_second : int |None = int.from_bytes(data[:4], "big")
+        if not nodes_per_second:
+            nodes_per_second = None
         data = data[4:]
 
         pv_length = int.from_bytes(data[:4], "big")
         pv = [Field(x) for x in data[4 : 4 + pv_length]]
-        data = data[4 + pv_length :]
-
-        best_move = Field(data[0])
 
         return EdaxLine(
             index,
@@ -68,21 +90,38 @@ class EdaxLine:
             nodes,
             nodes_per_second,
             pv,
-            best_move,
         )
 
     def __bytes__(self) -> bytes:
         index = self.index.to_bytes(4, "big")
-        Intensity = bytes(self.intensity)
-        score = self.score.to_bytes(4, "big")
+        intensity = bytes(self.intensity)
+        score = self.score.to_bytes(4, "big", signed=True)
         time = self.time.encode()
         time = len(time).to_bytes(4, "big") + time
         nodes = self.nodes.to_bytes(4, "big")
-        nps = self.nodes_per_second.to_bytes(4, "big")
+        if self.nodes_per_second:
+            nps = self.nodes_per_second.to_bytes(4, "big")
+        else:
+            nps = b"\x00\x00\x00\x00"
         pv = b"".join(Field[x.name].value.to_bytes(1, "big") for x in self.pv)
         pv = len(pv).to_bytes(4, "big") + pv
-        best_move = self.best_move.value.to_bytes(1, "big")
-        return index + Intensity + score + time + nodes + nps + pv + best_move
+        return index + intensity + score + time + nodes + nps + pv
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EdaxLine):
+            return NotImplemented
+        return all(
+            getattr(self, x) == getattr(other, x)
+            for x in [
+                "index",
+                "intensity",
+                "score",
+                "time",
+                "nodes",
+                "nodes_per_second",
+                "pv",
+            ]
+        )
 
     def __str__(self) -> str:
         pv = " ".join(x.name for x in self.pv)
@@ -145,7 +184,7 @@ class Edax(Engine, Player):
         results = self.edax.solve([str(p) for p in pos])
         if not self.multiprocess:
             results = results.lines
-        return [EdaxLine(x) for x in results]
+        return [EdaxLine.from_edax_line(x) for x in results]
 
     def solve(self, pos: Position) -> Result:
         return self.solve_native(pos)[0].result

@@ -9,7 +9,7 @@ class EdaxOutputTest(unittest.TestCase):
         line = edax.Line(
             "  7|   24   -08        0:00.234      63133975  269803312 b3 C1 b1 A3 b2 H3 a5"
         )
-        line = EdaxLine(line)
+        line = EdaxLine.from_edax_line(line)
         self.assertEqual(line.index, 7)
         self.assertEqual(line.intensity, Intensity(24))
         self.assertEqual(line.score, -8)
@@ -37,12 +37,14 @@ class EdaxOutputTest(unittest.TestCase):
                 ]
             ),
         )
+        new_line = EdaxLine.from_bytes(bytes(line))
+        self.assertEqual(new_line, line)
 
     def test_depth_selectivity(self):
         line = edax.Line(
             "  8|25@98%  +03        0:00.094       9940593  105750989 G2 b8 B7 a2 A5 b2 G3"
         )
-        line = EdaxLine(line)
+        line = EdaxLine.from_edax_line(line)
         self.assertEqual(line.index, 8)
         self.assertEqual(line.intensity, Intensity(25, 2.6))
         self.assertEqual(line.score, +3)
@@ -70,12 +72,14 @@ class EdaxOutputTest(unittest.TestCase):
                 ]
             ),
         )
+        new_line = EdaxLine.from_bytes(bytes(line))
+        self.assertEqual(new_line, line)
 
     def test_no_nodes_per_second(self):
         line = edax.Line(
             "  1|   14   +18        0:00.000         95959            g8 H7 a8 A6 a4 A7 b6"
         )
-        line = EdaxLine(line)
+        line = EdaxLine.from_edax_line(line)
         self.assertEqual(line.index, 1)
         self.assertEqual(line.intensity, Intensity(14))
         self.assertEqual(line.score, +18)
@@ -103,10 +107,12 @@ class EdaxOutputTest(unittest.TestCase):
                 ]
             ),
         )
+        new_line = EdaxLine.from_bytes(bytes(line))
+        self.assertEqual(new_line, line)
 
     def test_pass(self):
         line = edax.Line("  7|   24   -08        0:00.234      63133975  269803312 ps")
-        line = EdaxLine(line)
+        line = EdaxLine.from_edax_line(line)
         self.assertEqual(line.index, 7)
         self.assertEqual(line.intensity, Intensity(24))
         self.assertEqual(line.score, -8)
@@ -131,6 +137,8 @@ class EdaxOutputTest(unittest.TestCase):
                 ]
             ),
         )
+        new_line = EdaxLine.from_bytes(bytes(line))
+        self.assertEqual(new_line, line)
 
 
 class EdaxTest(unittest.TestCase):

@@ -1,4 +1,5 @@
 "Intensity of a search."
+
 import struct
 from dataclasses import dataclass
 
@@ -6,6 +7,7 @@ from dataclasses import dataclass
 @dataclass
 class Intensity:
     "Intensity class for representing the depth and the confidence value of a search."
+
     depth: int
     confidence_level: float = float("inf")
 
@@ -19,17 +21,17 @@ class Intensity:
             return Intensity(int(depth), float(confidence_level))
         else:
             return Intensity(int(string))
-        
+
     @staticmethod
     def from_bytes(data: bytes) -> "Intensity":
         "Return an intensity from a bytes object."
-        depth = int.from_bytes(data[:4], "big")
-        confidence_level = struct.unpack("f", data[4:8])[0]
+        depth = int.from_bytes(data[:1], "big")
+        confidence_level = struct.unpack("d", data[1:9])[0]
         return Intensity(depth, confidence_level)
 
     def __bytes__(self) -> bytes:
-        depth = self.depth.to_bytes(4, "big")
-        confidence_level = struct.pack("f", self.confidence_level)
+        depth = self.depth.to_bytes(1, "big")
+        confidence_level = struct.pack("d", self.confidence_level)
         return depth + confidence_level
 
     def __str__(self) -> str:
