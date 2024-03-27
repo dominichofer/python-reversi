@@ -1,6 +1,7 @@
 import unittest
 import edax
-from reversi.engine.edax import Field, Intensity, EdaxLine  # type: ignore
+from reversi import Field, Position, Intensity  # type: ignore
+from reversi.engine.edax import EdaxLine, Edax  # type: ignore
 
 
 class EdaxOutputTest(unittest.TestCase):
@@ -62,3 +63,41 @@ class EdaxOutputTest(unittest.TestCase):
         self.assertEqual(line.nodes, 63133975)
         self.assertEqual(line.nodes_per_second, 269803312)
         self.assertEqual(line.pv, [Field.PS])
+
+
+class EdaxTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.pos = Position.from_string(
+            "--XXXXX--OOOXX-O-OOOXXOX-OXOXOXXOXXXOXXX--XOXOXX-XXXOOO--OOOOO-- X"
+        )
+        self.multi_pos = [
+            "--XXXXX--OOOXX-O-OOOXXOX-OXOXOXXOXXXOXXX--XOXOXX-XXXOOO--OOOOO-- X",
+            "-XXXXXX---XOOOO--XOXXOOX-OOOOOOOOOOOXXOOOOOXXOOX--XXOO----XXXXX- X",
+            "----OX----OOXX---OOOXX-XOOXXOOOOOXXOXXOOOXXXOOOOOXXXXOXO--OOOOOX X",
+        ]
+        self.score = +18
+        self.multi_score = [+18, +10, +2]
+
+    def test_solve_native_single_process_single_pos(self):
+        engine = Edax()
+        result = engine.solve_native(self.pos)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].score, self.score)
+
+    def test_solve_native_single_process_multi_pos(self):
+        engine = Edax()
+        result = engine.solve_native(self.multi_pos)
+        self.assertEqual(len(result), 3)
+        self.assertEqual([x.score for x in result], self.multi_score)
+
+    def test_solve_native_multi_process_single_pos(self):
+        engine = Edax(multiprocess=True)
+        result = engine.solve_native(self.pos)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].score, self.score)
+
+    def test_solve_native_multi_process_multi_pos(self):
+        engine = Edax(multiprocess=True)
+        result = engine.solve_native(self.multi_pos)
+        self.assertEqual(len(result), 3)
+        self.assertEqual([x.score for x in result], self.multi_score)
