@@ -82,9 +82,9 @@ class Edax(Engine, Player):
         """
         self.multiprocess = multiprocess
         if multiprocess:
-            self.edax = edax.Edax(hash_table_size, tasks, level)
-        else:
             self.edax = edax.MultiprocessEdax(hash_table_size, tasks, level)
+        else:
+            self.edax = edax.Edax(hash_table_size, tasks, level)
 
     def name(self) -> str:
         return edax.Edax.name()
