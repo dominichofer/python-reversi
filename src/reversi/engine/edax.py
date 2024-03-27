@@ -1,5 +1,4 @@
 from typing import Iterable
-import locale
 import edax  # type: ignore
 from reversi.search import (
     ClosedInterval,
@@ -33,20 +32,62 @@ class EdaxLine:
         self.pv = [Field[x.upper()] for x in line.pv]
         self.best_move = self.pv[0] if self.pv else Field.PS
 
-    @property
-    def result(self) -> Result:
-        "Returns the search result."
-        return Result(
-            ClosedInterval(self.score, self.score),
-            self.intensity,
-            self.best_move,
+    @staticmethod
+    def from_bytes(data: bytes) -> "EdaxLine":
+        "Return an EdaxLine from a bytes object."
+        index = int.from_bytes(data[:4], "big")
+        data = data[4:]
+
+        intensity = Intensity.from_bytes(data[:8])
+        data = data[8:]
+
+        score = int.from_bytes(data[:4], "big")
+        data = data[4:]
+
+        time_length = int.from_bytes(data[:4], "big")
+        time = data[4 : 4 + time_length].decode()
+        data = data[4 + time_length :]
+
+        nodes = int.from_bytes(data[:4], "big")
+        data = data[4:]
+
+        nodes_per_second = int.from_bytes(data[:4], "big")
+        data = data[4:]
+
+        pv_length = int.from_bytes(data[:4], "big")
+        pv = [Field(x) for x in data[4 : 4 + pv_length]]
+        data = data[4 + pv_length :]
+
+        best_move = Field(data[0])
+
+        return EdaxLine(
+            index,
+            intensity,
+            score,
+            time,
+            nodes,
+            nodes_per_second,
+            pv,
+            best_move,
         )
 
+    def __bytes__(self) -> bytes:
+        index = self.index.to_bytes(4, "big")
+        Intensity = bytes(self.intensity)
+        score = self.score.to_bytes(4, "big")
+        time = self.time.encode()
+        time = len(time).to_bytes(4, "big") + time
+        nodes = self.nodes.to_bytes(4, "big")
+        nps = self.nodes_per_second.to_bytes(4, "big")
+        pv = b"".join(Field[x.name].value.to_bytes(1, "big") for x in self.pv)
+        pv = len(pv).to_bytes(4, "big") + pv
+        best_move = self.best_move.value.to_bytes(1, "big")
+        return index + Intensity + score + time + nodes + nps + pv + best_move
+
     def __str__(self) -> str:
-        locale.setlocale(locale.LC_ALL, "")
         pv = " ".join(x.name for x in self.pv)
         if self.nodes_per_second is not None:
-            nodes_per_second = f"{self.nodes_per_second:n} N/s"
+            nodes_per_second = f"{self.nodes_per_second:_} N/s".replace("_", "'")
         else:
             nodes_per_second = "? N/s"
         return "\n".join(
@@ -55,12 +96,21 @@ class EdaxLine:
                 f"intensity: d{self.intensity}",
                 f"score: {self.score:+03}",
                 f"time: {self.time}",
-                f"nodes: {self.nodes:n}",
+                f"nodes: {self.nodes:_}".replace("_", "'"),
                 f"nodes_per_second: {nodes_per_second}",
                 f"pv: {pv}",
                 f"best_move: {self.best_move.name}",
                 f"result: {self.result}",
             ]
+        )
+
+    @property
+    def result(self) -> Result:
+        "Returns the search result."
+        return Result(
+            ClosedInterval(self.score, self.score),
+            self.intensity,
+            self.best_move,
         )
 
 

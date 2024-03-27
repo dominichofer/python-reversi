@@ -6,7 +6,6 @@ from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 from typing import Iterable
 from pathlib import Path
-import locale
 from reversi.search import (
     OpenInterval,
     ClosedInterval,
@@ -50,7 +49,6 @@ class CassandraLine:
         )
 
     def __str__(self) -> str:
-        locale.setlocale(locale.LC_ALL, "")
         pv = " ".join(x.name for x in self.pv)
         return "\n".join(
             [
@@ -58,8 +56,8 @@ class CassandraLine:
                 f"intensity: d{self.intensity}",
                 f"score: {self.score:+03}",
                 f"time: {self.time}",
-                f"nodes: {self.nodes:n}",
-                f"speed: {self.speed:n} N/s" if self.speed else "speed: ? N/s",
+                f"nodes: {self.nodes:_}".replace("_", "'"),
+                f"speed: {self.speed:_} N/s".replace("_", "'") if self.speed else "speed: ? N/s",
                 f"pv: {pv}",
                 f"best_move: {self.best_move.name}",
                 f"result: {self.result}",
