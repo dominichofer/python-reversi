@@ -92,7 +92,7 @@ class Edax(Engine, Player):
     def solve_native(self, pos: Position | Iterable[Position]) -> list[EdaxLine]:
         if isinstance(pos, Position):
             pos = [pos]
-        results = self.edax.solve(pos)
+        results = self.edax.solve([str(p) for p in pos])
         if not self.multiprocess:
             results = results.lines
         return [EdaxLine(x) for x in results]
