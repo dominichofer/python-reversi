@@ -20,6 +20,23 @@ class EdaxOutputTest(unittest.TestCase):
             line.pv,
             [Field.B3, Field.C1, Field.B1, Field.A3, Field.B2, Field.H3, Field.A5],
         )
+        self.assertEqual(line.best_move, Field.B3)
+        self.assertEqual(
+            str(line),
+            "\n".join(
+                [
+                    "index: 7",
+                    "intensity: d24",
+                    "score: -08",
+                    "time: 0:00.234",
+                    "nodes: 63'133'975",
+                    "nodes_per_second: 269'803'312 N/s",
+                    "pv: B3 C1 B1 A3 B2 H3 A5",
+                    "best_move: B3",
+                    "result: [-08,-08] d24 B3",
+                ]
+            ),
+        )
 
     def test_depth_selectivity(self):
         line = edax.Line(
@@ -35,6 +52,23 @@ class EdaxOutputTest(unittest.TestCase):
         self.assertEqual(
             line.pv,
             [Field.G2, Field.B8, Field.B7, Field.A2, Field.A5, Field.B2, Field.G3],
+        )
+        self.assertEqual(line.best_move, Field.G2)
+        self.assertEqual(
+            str(line),
+            "\n".join(
+                [
+                    "index: 8",
+                    "intensity: d25@2.6σ",
+                    "score: +03",
+                    "time: 0:00.094",
+                    "nodes: 9'940'593",
+                    "nodes_per_second: 105'750'989 N/s",
+                    "pv: G2 B8 B7 A2 A5 B2 G3",
+                    "best_move: G2",
+                    "result: [+03,+03] d25@2.6σ G2",
+                ]
+            ),
         )
 
     def test_no_nodes_per_second(self):
@@ -52,6 +86,23 @@ class EdaxOutputTest(unittest.TestCase):
             line.pv,
             [Field.G8, Field.H7, Field.A8, Field.A6, Field.A4, Field.A7, Field.B6],
         )
+        self.assertEqual(line.best_move, Field.G8)
+        self.assertEqual(
+            str(line),
+            "\n".join(
+                [
+                    "index: 1",
+                    "intensity: d14",
+                    "score: +18",
+                    "time: 0:00.000",
+                    "nodes: 95'959",
+                    "nodes_per_second: ? N/s",
+                    "pv: G8 H7 A8 A6 A4 A7 B6",
+                    "best_move: G8",
+                    "result: [+18,+18] d14 G8",
+                ]
+            ),
+        )
 
     def test_pass(self):
         line = edax.Line("  7|   24   -08        0:00.234      63133975  269803312 ps")
@@ -63,6 +114,23 @@ class EdaxOutputTest(unittest.TestCase):
         self.assertEqual(line.nodes, 63133975)
         self.assertEqual(line.nodes_per_second, 269803312)
         self.assertEqual(line.pv, [Field.PS])
+        self.assertEqual(line.best_move, Field.PS)
+        self.assertEqual(
+            str(line),
+            "\n".join(
+                [
+                    "index: 7",
+                    "intensity: d24",
+                    "score: -08",
+                    "time: 0:00.234",
+                    "nodes: 63'133'975",
+                    "nodes_per_second: 269'803'312 N/s",
+                    "pv: PS",
+                    "best_move: PS",
+                    "result: [-08,-08] d24 PS",
+                ]
+            ),
+        )
 
 
 class EdaxTest(unittest.TestCase):
