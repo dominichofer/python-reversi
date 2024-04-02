@@ -64,20 +64,20 @@ class EdaxLine:
         intensity = Intensity.from_bytes(data[:9])
         data = data[9:]
 
-        score = int.from_bytes(data[:4], "big", signed=True)
-        data = data[4:]
+        score = int.from_bytes(data[:1], "big", signed=True)
+        data = data[1:]
 
-        time_length = int.from_bytes(data[:4], "big")
-        time = data[4 : 4 + time_length].decode()
-        data = data[4 + time_length :]
+        time_length = int.from_bytes(data[:1], "big")
+        time = data[1 : 1 + time_length].decode()
+        data = data[1 + time_length :]
 
-        nodes = int.from_bytes(data[:4], "big")
-        data = data[4:]
+        nodes = int.from_bytes(data[:8], "big")
+        data = data[8:]
 
-        nodes_per_second : int |None = int.from_bytes(data[:4], "big")
+        nodes_per_second : int |None = int.from_bytes(data[:8], "big")
         if not nodes_per_second:
             nodes_per_second = None
-        data = data[4:]
+        data = data[8:]
 
         pv_length = int.from_bytes(data[:4], "big")
         pv = [Field(x) for x in data[4 : 4 + pv_length]]
@@ -95,14 +95,14 @@ class EdaxLine:
     def __bytes__(self) -> bytes:
         index = self.index.to_bytes(4, "big")
         intensity = bytes(self.intensity)
-        score = self.score.to_bytes(4, "big", signed=True)
+        score = self.score.to_bytes(1, "big", signed=True)
         time = self.time.encode()
-        time = len(time).to_bytes(4, "big") + time
-        nodes = self.nodes.to_bytes(4, "big")
+        time = len(time).to_bytes(1, "big") + time
+        nodes = self.nodes.to_bytes(8, "big")
         if self.nodes_per_second:
-            nps = self.nodes_per_second.to_bytes(4, "big")
+            nps = self.nodes_per_second.to_bytes(8, "big")
         else:
-            nps = b"\x00\x00\x00\x00"
+            nps = b"\x00\x00\x00\x00\x00\x00\x00\x00"
         pv = b"".join(Field[x.name].value.to_bytes(1, "big") for x in self.pv)
         pv = len(pv).to_bytes(4, "big") + pv
         return index + intensity + score + time + nodes + nps + pv
