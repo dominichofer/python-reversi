@@ -8,6 +8,7 @@ version = "1.0.1"
 requires-python = ">= 3.10"
 dependencies = [
     # Runtime dependencies
+    "matplotlib",
     "numpy",
     "pillow",
     "edax @ git+https://github.com/dominichofer/python-edax",
