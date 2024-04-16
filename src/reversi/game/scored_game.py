@@ -34,3 +34,7 @@ class ScoredGame:
 
     def __eq__(self, o):
         return self.game == o.game and self.scores == o.scores
+
+    def clear_scores(self):
+        "Clear all scores."
+        self.scores = [undefined_score] * (len(self.game.moves) + 1)
