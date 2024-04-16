@@ -104,7 +104,7 @@ class Cassandra(Engine, Player):
     def solve_many_native(self, pos: Iterable[Position]) -> list[CassandraLine]:
         "Solves positions."
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file.write_text("\n".join(str(p) for p in pos))
+            temp_file.write("\n".join(str(p) for p in pos).encode("utf-8"))
         result = subprocess.run(
             self.__command(temp_file.name), capture_output=True, check=True, text=True
         )
